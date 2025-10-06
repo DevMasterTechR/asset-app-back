@@ -222,6 +222,27 @@ CREATE INDEX idx_powerstrips_color ON Power_Strips(color);
 CREATE INDEX idx_powerstrips_purchase_date ON Power_Strips(purchase_date);
 
 -- ============================================
+-- CREDENTIALS TABLE (RELACIONADA A PEOPLE)
+-- ============================================
+
+CREATE TYPE system_type AS ENUM ('ERP', 'CRM', 'Email', 'GLPI');
+
+CREATE TABLE Credentials (
+    id SERIAL PRIMARY KEY,
+    person_id INT NOT NULL,
+    username VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    system system_type NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (person_id) REFERENCES People(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_credentials_person ON Credentials(person_id);
+CREATE INDEX idx_credentials_system ON Credentials(system);
+
+
+-- ============================================
 -- JSON USAGE EXAMPLES
 -- ============================================
 
