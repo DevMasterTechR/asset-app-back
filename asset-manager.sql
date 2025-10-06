@@ -241,6 +241,33 @@ CREATE TABLE Credentials (
 CREATE INDEX idx_credentials_person ON Credentials(person_id);
 CREATE INDEX idx_credentials_system ON Credentials(system);
 
+-- ============================================
+-- SIM CARDS TABLE (RELACIONADA A SIM CARDS)
+-- ============================================
+
+CREATE TYPE sim_plan_type AS ENUM ('prepago', 'pospago');
+CREATE TYPE sim_status AS ENUM ('activo', 'inactivo', 'suspendido', 'reemplazado');
+
+CREATE TABLE IF NOT EXISTS public.sim_cards
+(
+    id serial PRIMARY KEY,
+    asset_id integer NOT NULL,
+    carrier character varying(100) NOT NULL, -- operador telefónico
+    phone_number character varying(20) NOT NULL UNIQUE,
+    plan_type sim_plan_type NOT NULL,
+    status sim_status DEFAULT 'activo',
+    activation_date date,
+    notes text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT sim_cards_asset_id_fkey FOREIGN KEY (asset_id)
+        REFERENCES public.assets (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_sim_cards_asset ON public.sim_cards(asset_id);
 
 -- ============================================
 -- JSON USAGE EXAMPLES
