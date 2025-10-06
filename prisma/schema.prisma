@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+//
+// ENUMS
+//
+enum StorageType {
+  SSD
+  HDD
+  M2
+  NVMe
+  eMMC
+  Soldered
+  Other
+}
+
+enum AssetStatus {
+  available
+  assigned
+  maintenance
+  decommissioned
+}
+
+enum PersonStatus {
+  active
+  inactive
+  suspended
+}
+
+//
+// MODELS
+//
+
+model Branch {
+  id         Int      @id @default(autoincrement())
+  name       String
+  address    String?
+  region     String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt      @map("updated_at")
+
+  people     Person[]
+  assets     Asset[]
+}
+
+
+model Department {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+
+  // Relations
+  people Person[]
+}
+
+model Role {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+
+  // Relations
+  people Person[]
+}
+
+model Person {
+  id           Int          @id @default(autoincrement())
+  nationalId   String       @unique
+  firstName    String
+  lastName     String
+  username     String?      @unique
+  password     String?
+  status       PersonStatus @default(active)
+  departmentId Int?
+  roleId       Int?
+  branchId     Int?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Relations
+  department Department? @relation(fields: [departmentId], references: [id])
+  role       Role?       @relation(fields: [roleId], references: [id])
+  branch     Branch?     @relation(fields: [branchId], references: [id])
+
+  assets Asset[] @relation("PersonAssets")
+}
+
+model Asset {
+  id               Int         @id @default(autoincrement())
+  assetCode        String      @unique
+  assetType        String
+  serialNumber     String?     @unique
+  brand            String?
+  model            String?
+  status           AssetStatus @default(available)
+  branchId         Int?
+  assignedPersonId Int?
+  purchaseDate     DateTime?
+  deliveryDate     DateTime?
+  receivedDate     DateTime?
+  notes            String?
+  attributesJson   Json?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  // Relations
+  branch          Branch?          @relation(fields: [branchId], references: [id])
+  assignedPerson  Person?          @relation("PersonAssets", fields: [assignedPersonId], references: [id], onDelete: SetNull)
+  storageCapacity StorageCapacity?
+}
+
+model StorageCapacity {
+  id         Int         @id @default(autoincrement())
+  assetId    Int         @unique
+  type       StorageType
+  capacityGb Int
+  notes      String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+}
