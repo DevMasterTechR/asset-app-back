@@ -1,14 +1,17 @@
 import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { StorageType as PrismaStorageType } from '@prisma/client';
+import { StorageType } from '@prisma/client';
 
 export class CreateStorageDto {
   @IsInt()
+  @IsNotEmpty()
   assetId: number;
 
-  @IsEnum(PrismaStorageType) // Aquí usas el enum de Prisma
-  type: PrismaStorageType;
+  @IsEnum(StorageType)
+  @IsNotEmpty()
+  type: StorageType;
 
   @IsInt()
+  @IsNotEmpty()
   capacityGb: number;
 
   @IsOptional()

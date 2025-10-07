@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+  ParseIntPipe,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+} from '@nestjs/common';
 import { StorageService } from './storage.service';
 import { CreateStorageDto } from './dto/create-storage.dto';
 import { UpdateStorageDto } from './dto/update-storage.dto';
@@ -8,6 +20,7 @@ export class StorageController {
   constructor(private readonly storageService: StorageService) {}
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateStorageDto) {
     return this.storageService.create(dto);
   }
@@ -18,17 +31,33 @@ export class StorageController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.storageService.findOne(id);
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const storage = await this.storageService.findOne(id);
+    if (!storage) {
+      throw new NotFoundException(`Storage with ID ${id} not found`);
+    }
+    return storage;
   }
 
   @Put(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateStorageDto) {
-    return this.storageService.update(id, dto);
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateStorageDto,
+  ) {
+    const updated = await this.storageService.update(id, dto);
+    if (!updated) {
+      throw new NotFoundException(`Storage with ID ${id} not found`);
+    }
+    return updated;
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.storageService.remove(id);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    const deleted = await this.storageService.remove(id);
+    if (!deleted) {
+      throw new NotFoundException(`Storage with ID ${id} not found`);
+    }
+    return;
   }
 }
