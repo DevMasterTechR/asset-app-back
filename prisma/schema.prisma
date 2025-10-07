@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -24,6 +24,42 @@ enum PersonStatus {
   suspended
 }
 
+enum StorageType {
+  SSD
+  HDD
+  M2
+  NVMe
+  eMMC
+  Soldered
+  Other
+}
+
+enum Condition {
+  excellent
+  good
+  fair
+  poor
+}
+
+enum SystemType {
+  email
+  glpi
+  erp
+  crm
+}
+
+enum SimPlanType {
+  prepago
+  postpago
+  corporativo
+}
+
+enum SimStatus {
+  activo
+  inactivo
+  suspendido
+}
+
 //
 // MODELS
 //
@@ -38,6 +74,7 @@ model Branch {
 
   people Person[]
   assets Asset[]
+  assignmentHistories AssignmentHistory[]
 }
 
 model Department {
@@ -45,7 +82,6 @@ model Department {
   name        String
   description String?
 
-  // Relations
   people Person[]
 }
 
@@ -54,7 +90,6 @@ model Role {
   name        String  @unique
   description String?
 
-  // Relations
   people Person[]
 }
 
@@ -72,12 +107,13 @@ model Person {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  // Relations
   department Department? @relation(fields: [departmentId], references: [id])
   role       Role?       @relation(fields: [roleId], references: [id])
   branch     Branch?     @relation(fields: [branchId], references: [id])
 
-  assets Asset[] @relation("PersonAssets")
+  assets              Asset[]             @relation("PersonAssets")
+  assignmentHistories AssignmentHistory[]
+  credentials         Credential[]
 }
 
 model Asset {
@@ -98,20 +134,11 @@ model Asset {
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
-  // Relaciones
-  branch            Branch?           @relation(fields: [branchId], references: [id])
-  assignedPerson    Person?           @relation("PersonAssets", fields: [assignedPersonId], references: [id], onDelete: SetNull)
-  storageCapacities StorageCapacity[] // 👈 Relación uno a muchos
-}
-
-enum StorageType {
-  SSD
-  HDD
-  M2
-  NVMe
-  eMMC
-  Soldered
-  Other
+  branch         Branch?           @relation(fields: [branchId], references: [id])
+  assignedPerson Person?           @relation("PersonAssets", fields: [assignedPersonId], references: [id], onDelete: SetNull)
+  storageCapacities StorageCapacity[]
+  assignmentHistories AssignmentHistory[]
+  simCards SimCard[]
 }
 
 model StorageCapacity {
@@ -123,10 +150,9 @@ model StorageCapacity {
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 
-  // Relación
   asset Asset @relation(fields: [assetId], references: [id])
 }
-//Sin Relación
+
 model Ink {
   id           Int      @id @default(autoincrement())
   brand        String
@@ -140,26 +166,26 @@ model Ink {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @default(now()) @map("updated_at")
 }
-//Sin Relación
+
 model UtpCable {
   id            Int      @id @default(autoincrement())
   brand         String
-  type          String         // utp_type será tratado como string
+  type          String
   material      String?
-  lengthMeters  Int      @default(0)
+  lengthMeters  Decimal?   // Puedes usar Decimal ahora en PostgreSQL
   color         String?
   purchaseDate  DateTime?
   usageDate     DateTime?
   notes         String?
   createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt      @map("updated_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 }
-//Sin Relación  
+
 model Rj45Connector {
   id            Int      @id @default(autoincrement())
   model         String
   quantityUnits Int      @default(0)
-  material      String? 
+  material      String?
   type          String?
   purchaseDate  DateTime?
   usageDate     DateTime?
@@ -170,11 +196,11 @@ model Rj45Connector {
 
 model PowerStrip {
   id           Int      @id @default(autoincrement())
-  brand        String?  // Removed @db.VarChar(100)
-  model        String   // Removed @db.VarChar(100)
+  brand        String?
+  model        String
   outletCount  Int?
-  lengthMeters Float?   // Changed from Decimal to Float (SQLite doesn't support Decimal)
-  color        String?  // Removed @db.VarChar(50)
+  lengthMeters Decimal?   // Cambiado de Float a Decimal (mejor precisión)
+  color        String?
   capacity     Int?
   purchaseDate DateTime?
   usageDate    DateTime?
@@ -195,19 +221,9 @@ model AssignmentHistory {
   deliveryNotes    String?
   returnNotes      String?
 
-  // Relaciones (puedes agregar las relaciones reales si tienes los modelos Asset, Person, Branch)
-  // asset           Asset      @relation(fields: [assetId], references: [id])
-  // person          Person     @relation(fields: [personId], references: [id])
-  // branch          Branch?    @relation(fields: [branchId], references: [id])
-}
-
-
-
-enum Condition {
-  excellent
-  good
-  fair
-  poor
+  asset   Asset   @relation(fields: [assetId], references: [id])
+  person  Person  @relation(fields: [personId], references: [id])
+  branch  Branch? @relation(fields: [branchId], references: [id])
 }
 
 model Credential {
@@ -220,29 +236,7 @@ model Credential {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  // Relaciones (si tienes modelo Person)
-  // person   Person @relation(fields: [personId], references: [id])
-}
-
-
-enum SystemType {
-  email
-  glpi
-  erp
-  crm
-}
-
-
-enum SimPlanType {
-  prepago
-  postpago
-  corporativo
-}
-
-enum SimStatus {
-  activo
-  inactivo
-  suspendido
+  person   Person @relation(fields: [personId], references: [id])
 }
 
 model SimCard {
@@ -257,7 +251,5 @@ model SimCard {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
-  // Relación (si tienes modelo Asset)
-  // asset         Asset      @relation(fields: [assetId], references: [id])
+  asset Asset @relation(fields: [assetId], references: [id])
 }
-

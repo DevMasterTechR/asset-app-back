@@ -1,29 +1,74 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePowerStripDto } from './dto/create-power-strip.dto';
 import { UpdatePowerStripDto } from './dto/update-power-strip.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PowerStripService {
   constructor(private prisma: PrismaService) {}
 
-  create(data: CreatePowerStripDto) {
-    return this.prisma.powerStrip.create({ data });
+  // Crear
+  async create(data: CreatePowerStripDto) {
+    try {
+      return await this.prisma.powerStrip.create({ data });
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
   }
 
-  findAll() {
+  // Obtener todos
+  async findAll() {
     return this.prisma.powerStrip.findMany();
   }
 
-  findOne(id: number) {
-    return this.prisma.powerStrip.findUnique({ where: { id } });
+  // Obtener uno
+  async findOne(id: number) {
+    const item = await this.prisma.powerStrip.findUnique({ where: { id } });
+
+    if (!item) {
+      throw new NotFoundException(`Regleta con ID ${id} no encontrada`);
+    }
+
+    return item;
   }
 
-  update(id: number, data: UpdatePowerStripDto) {
-    return this.prisma.powerStrip.update({ where: { id }, data });
+  // Actualizar
+  async update(id: number, data: UpdatePowerStripDto) {
+    try {
+      return await this.prisma.powerStrip.update({ where: { id }, data });
+    } catch (error) {
+      this.handlePrismaError(error, id);
+    }
   }
 
-  remove(id: number) {
-    return this.prisma.powerStrip.delete({ where: { id } });
+  // Eliminar
+  async remove(id: number) {
+    try {
+      return await this.prisma.powerStrip.delete({ where: { id } });
+    } catch (error) {
+      this.handlePrismaError(error, id);
+    }
+  }
+
+  // Manejo centralizado de errores
+  private handlePrismaError(error: any, id?: number): never {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      switch (error.code) {
+        case 'P2025':
+          throw new NotFoundException(`Regleta con ID ${id} no encontrada`);
+        case 'P2002':
+          throw new BadRequestException('Ya existe una regleta con ese valor único');
+        default:
+          throw new BadRequestException('Error en la solicitud');
+      }
+    }
+
+    throw new InternalServerErrorException('Error interno del servidor');
   }
 }
