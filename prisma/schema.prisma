@@ -10,15 +10,6 @@ datasource db {
 //
 // ENUMS
 //
-enum StorageType {
-  SSD
-  HDD
-  M2
-  NVMe
-  eMMC
-  Soldered
-  Other
-}
 
 enum AssetStatus {
   available
@@ -38,17 +29,16 @@ enum PersonStatus {
 //
 
 model Branch {
-  id         Int      @id @default(autoincrement())
-  name       String
-  address    String?
-  region     String?
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt      @map("updated_at")
+  id        Int      @id @default(autoincrement())
+  name      String
+  address   String?
+  region    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  people     Person[]
-  assets     Asset[]
+  people Person[]
+  assets Asset[]
 }
-
 
 model Department {
   id          Int     @id @default(autoincrement())
@@ -108,20 +98,166 @@ model Asset {
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
-  // Relations
-  branch          Branch?          @relation(fields: [branchId], references: [id])
-  assignedPerson  Person?          @relation("PersonAssets", fields: [assignedPersonId], references: [id], onDelete: SetNull)
-  storageCapacity StorageCapacity?
+  // Relaciones
+  branch            Branch?           @relation(fields: [branchId], references: [id])
+  assignedPerson    Person?           @relation("PersonAssets", fields: [assignedPersonId], references: [id], onDelete: SetNull)
+  storageCapacities StorageCapacity[] // 👈 Relación uno a muchos
+}
+
+enum StorageType {
+  SSD
+  HDD
+  M2
+  NVMe
+  eMMC
+  Soldered
+  Other
 }
 
 model StorageCapacity {
   id         Int         @id @default(autoincrement())
-  assetId    Int         @unique
+  assetId    Int
   type       StorageType
   capacityGb Int
   notes      String?
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 
-  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  // Relación
+  asset Asset @relation(fields: [assetId], references: [id])
 }
+//Sin Relación
+model Ink {
+  id           Int      @id @default(autoincrement())
+  brand        String
+  model        String
+  color        String
+  quantity     Int      @default(0)
+  inkType      String?
+  purchaseDate DateTime?
+  usageDate    DateTime?
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @map("updated_at")
+}
+//Sin Relación
+model UtpCable {
+  id            Int      @id @default(autoincrement())
+  brand         String
+  type          String         // utp_type será tratado como string
+  material      String?
+  lengthMeters  Int      @default(0)
+  color         String?
+  purchaseDate  DateTime?
+  usageDate     DateTime?
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt      @map("updated_at")
+}
+//Sin Relación  
+model Rj45Connector {
+  id            Int      @id @default(autoincrement())
+  model         String
+  quantityUnits Int      @default(0)
+  material      String? 
+  type          String?
+  purchaseDate  DateTime?
+  usageDate     DateTime?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PowerStrip {
+  id           Int      @id @default(autoincrement())
+  brand        String?  // Removed @db.VarChar(100)
+  model        String   // Removed @db.VarChar(100)
+  outletCount  Int?
+  lengthMeters Float?   // Changed from Decimal to Float (SQLite doesn't support Decimal)
+  color        String?  // Removed @db.VarChar(50)
+  capacity     Int?
+  purchaseDate DateTime?
+  usageDate    DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AssignmentHistory {
+  id               Int        @id @default(autoincrement())
+  assetId          Int
+  personId         Int
+  branchId         Int?
+  assignmentDate   DateTime   @default(now())
+  returnDate       DateTime?
+  deliveryCondition Condition @default(good)
+  returnCondition  Condition?
+  deliveryNotes    String?
+  returnNotes      String?
+
+  // Relaciones (puedes agregar las relaciones reales si tienes los modelos Asset, Person, Branch)
+  // asset           Asset      @relation(fields: [assetId], references: [id])
+  // person          Person     @relation(fields: [personId], references: [id])
+  // branch          Branch?    @relation(fields: [branchId], references: [id])
+}
+
+
+
+enum Condition {
+  excellent
+  good
+  fair
+  poor
+}
+
+model Credential {
+  id        Int        @id @default(autoincrement())
+  personId  Int
+  username  String
+  password  String
+  system    SystemType
+  notes     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relaciones (si tienes modelo Person)
+  // person   Person @relation(fields: [personId], references: [id])
+}
+
+
+enum SystemType {
+  email
+  glpi
+  erp
+  crm
+}
+
+
+enum SimPlanType {
+  prepago
+  postpago
+  corporativo
+}
+
+enum SimStatus {
+  activo
+  inactivo
+  suspendido
+}
+
+model SimCard {
+  id             Int         @id @default(autoincrement())
+  assetId        Int
+  carrier        String
+  phoneNumber    String      @unique
+  planType       SimPlanType
+  status         SimStatus   @default(activo)
+  activationDate DateTime?
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Relación (si tienes modelo Asset)
+  // asset         Asset      @relation(fields: [assetId], references: [id])
+}
+
