@@ -12,6 +12,10 @@ import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
+
 import {
   ApiTags,
   ApiOperation,
@@ -19,6 +23,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
+@UseGuards(JwtAuthGuard, SessionGuard)
 @ApiTags('Roles') // <--- Agrupa este controlador en Swagger
 @Controller('roles')
 export class RolesController {

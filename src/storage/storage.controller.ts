@@ -12,6 +12,10 @@ import { StorageService } from './storage.service';
 import { CreateStorageDto } from './dto/create-storage.dto';
 import { UpdateStorageDto } from './dto/update-storage.dto';
 
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
+
 // ✅ Funciones auxiliares para evitar repetición
 
 const ApiIdParam = () =>
@@ -28,6 +32,7 @@ const ApiBadRequest = (description = 'Datos de entrada inválidos') =>
 const ApiNotFound = (description = 'Almacenamiento no encontrado') =>
   ApiNotFoundResponse({ description });
 
+@UseGuards(JwtAuthGuard, SessionGuard)
 @ApiTags('Storage')
 @Controller('storage')
 export class StorageController {

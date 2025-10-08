@@ -27,6 +27,10 @@ import { CredentialsService } from './credentials.service';
 import { CreateCredentialDto } from './dto/create-credential.dto';
 import { UpdateCredentialDto } from './dto/update-credential.dto';
 
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
+
 // ✅ Decoradores reutilizables
 const ApiIdParam = () =>
   ApiParam({
@@ -42,6 +46,7 @@ const ApiBadRequest = (description = 'Solicitud inválida') =>
 const ApiNotFound = (description = 'Credencial no encontrada') =>
   ApiNotFoundResponse({ description });
 
+@UseGuards(JwtAuthGuard, SessionGuard)
 @ApiTags('Credentials')
 @Controller('credentials')
 export class CredentialsController {

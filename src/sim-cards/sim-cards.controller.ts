@@ -27,6 +27,10 @@ import { SimCardsService } from './sim-cards.service';
 import { CreateSimCardDto } from './dto/create-sim-card.dto';
 import { UpdateSimCardDto } from './dto/update-sim-card.dto';
 
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
+
 // Decoradores auxiliares
 const ApiIdParam = () =>
   ApiParam({
@@ -42,6 +46,7 @@ const ApiBadRequest = (description = 'Datos inválidos') =>
 const ApiNotFound = (description = 'Tarjeta SIM no encontrada') =>
   ApiNotFoundResponse({ description });
 
+@UseGuards(JwtAuthGuard, SessionGuard)
 @ApiTags('Sim Cards')
 @Controller('sim-cards')
 export class SimCardsController {

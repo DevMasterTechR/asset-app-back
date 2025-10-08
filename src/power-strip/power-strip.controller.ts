@@ -27,6 +27,10 @@ import { PowerStripService } from './power-strip.service';
 import { CreatePowerStripDto } from './dto/create-power-strip.dto';
 import { UpdatePowerStripDto } from './dto/update-power-strip.dto';
 
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
+
 // ✅ Decoradores reutilizables
 const ApiIdParam = () =>
   ApiParam({
@@ -42,6 +46,7 @@ const ApiBadRequest = (description = 'Datos inválidos') =>
 const ApiNotFound = (description = 'Multicontacto no encontrado') =>
   ApiNotFoundResponse({ description });
 
+@UseGuards(JwtAuthGuard, SessionGuard)
 @ApiTags('Power Strips')
 @Controller('power-strips')
 export class PowerStripController {

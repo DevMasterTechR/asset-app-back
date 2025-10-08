@@ -27,6 +27,11 @@ import { UtpCableService } from './utp-cable.service';
 import { CreateUtpCableDto } from './dto/create-utp-cable.dto';
 import { UpdateUtpCableDto } from './dto/update-utp-cable.dto';
 
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
+
+@UseGuards(JwtAuthGuard, SessionGuard)
 @ApiTags('UTP Cables')
 @Controller('utp-cables')
 // @ApiBearerAuth() // Descomenta si usas autenticación JWT

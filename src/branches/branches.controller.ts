@@ -27,6 +27,10 @@ import { BranchesService } from './branches.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
+
 // ✅ Reutilizables
 const ApiIdParam = () =>
   ApiParam({
@@ -42,6 +46,7 @@ const ApiBadRequest = (description = 'Solicitud inválida') =>
 const ApiNotFound = (description = 'Sucursal no encontrada') =>
   ApiNotFoundResponse({ description });
 
+@UseGuards(JwtAuthGuard, SessionGuard)
 @ApiTags('Branches')
 @Controller('branches')
 export class BranchesController {

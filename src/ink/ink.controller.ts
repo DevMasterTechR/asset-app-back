@@ -27,6 +27,10 @@ import { InkService } from './ink.service';
 import { CreateInkDto } from './dto/create-ink.dto';
 import { UpdateInkDto } from './dto/update-ink.dto';
 
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
+
 // ✅ Decoradores reutilizables
 const ApiIdParam = () =>
   ApiParam({
@@ -42,6 +46,7 @@ const ApiBadRequest = (description = 'Datos inválidos') =>
 const ApiNotFound = (description = 'Tinta no encontrada') =>
   ApiNotFoundResponse({ description });
 
+@UseGuards(JwtAuthGuard, SessionGuard)
 @ApiTags('Inks')
 @Controller('inks')
 export class InkController {

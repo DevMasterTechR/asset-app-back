@@ -12,6 +12,10 @@ import { Rj45ConnectorService } from './rj45-connector.service';
 import { CreateRj45ConnectorDto } from './dto/create-rj45-connector.dto';
 import { UpdateRj45ConnectorDto } from './dto/update-rj45-connector.dto';
 
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
+
 import {
   ApiTags,
   ApiOperation,
@@ -19,6 +23,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
+@UseGuards(JwtAuthGuard, SessionGuard)
 @ApiTags('RJ45 Connectors') // Swagger: agrupa el controlador
 @Controller('rj45-connectors')
 export class Rj45ConnectorController {
