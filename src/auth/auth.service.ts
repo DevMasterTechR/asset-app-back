@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { CreatePersonDto } from '../people/dto/create-person.dto';
-import { handlePrismaError } from '../common/utils/prisma-error.util'; // Ajusta la ruta si es necesario
+import { handlePrismaError } from '../common/utils/prisma-error.util';
 
 @Injectable()
 export class AuthService {
@@ -22,7 +22,6 @@ export class AuthService {
       const { password, ...safeUser } = user;
       return { message: 'Usuario registrado', user: safeUser };
     } catch (error) {
-      // Usamos la función para manejar errores de Prisma
       handlePrismaError(error, 'Usuario');
     }
   }
@@ -48,6 +47,12 @@ export class AuthService {
     const payload = { username: user.username, sub: user.id };
     const access_token = this.jwtService.sign(payload);
 
+    // Guardar el token actual en la base de datos
+    await this.prisma.person.update({
+      where: { id: user.id },
+      data: { currentToken: access_token },
+    });
+
     return {
       access_token,
       user: {
@@ -55,5 +60,13 @@ export class AuthService {
         username: user.username,
       },
     };
+  }
+
+  async logout(userId: number) {
+    // Eliminar el token actual del usuario
+    await this.prisma.person.update({
+      where: { id: userId },
+      data: { currentToken: null },
+    });
   }
 }

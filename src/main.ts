@@ -7,25 +7,24 @@ import cookieParser from 'cookie-parser';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // 🧼 Habilitar cookie-parser para leer JWT desde cookies
+  // 🧼 Middleware para leer cookies
   app.use(cookieParser());
 
-  // ✅ Validaciones globales para DTOs (opcional pero recomendado)
+  // ✅ Validaciones globales
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
-  // 📄 Configuración de Swagger
+  // 📄 Swagger
   const config = new DocumentBuilder()
     .setTitle('Asset Management API')
     .setDescription('API para gestionar activos, tarjetas SIM, credenciales, etc.')
     .setVersion('1.0')
     .addTag('SIM Cards')
-    .addCookieAuth('jwt') // ✅ Soporte visual de autenticación vía cookies
+    .addCookieAuth('jwt') // 🔐 soporte para autenticación vía cookies
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document); // http://localhost:3000/api
+  SwaggerModule.setup('api', app, document);
 
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
-

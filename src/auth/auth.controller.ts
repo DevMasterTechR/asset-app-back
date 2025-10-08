@@ -5,12 +5,15 @@ import {
   Res,
   HttpCode,
   HttpStatus,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { CreatePersonDto } from '../people/dto/create-person.dto';
+import { JwtService } from '@nestjs/jwt';
 import {
   ApiTags,
   ApiOperation,
@@ -18,7 +21,6 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
   ApiOkResponse,
-  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 @ApiTags('Auth')
@@ -27,8 +29,8 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
   ) {}
-
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -54,8 +56,17 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cerrar sesión' })
   @ApiOkResponse({ description: 'Sesión cerrada exitosamente' })
-  async logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('jwt');
-    return { message: 'Sesión cerrada' };
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const token = req.cookies?.jwt;
+    if (!token) throw new UnauthorizedException('Token no encontrado');
+
+    try {
+      const payload = this.jwtService.verify(token);
+      await this.authService.logout(payload.sub); 
+      res.clearCookie('jwt');
+      return { message: 'Sesión cerrada' };
+    } catch (err) {
+      throw new UnauthorizedException('Token inválido');
+    }
   }
 }
