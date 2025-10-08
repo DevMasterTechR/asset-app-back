@@ -7,21 +7,23 @@ import {
   HttpStatus,
   Req,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
-import { CreatePersonDto } from '../people/dto/create-person.dto';
+
 import { JwtService } from '@nestjs/jwt';
 import {
   ApiTags,
   ApiOperation,
   ApiBody,
-  ApiCreatedResponse,
   ApiBadRequestResponse,
   ApiOkResponse,
 } from '@nestjs/swagger';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { SessionGuard } from './guards/session.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -53,20 +55,17 @@ export class AuthController {
   }
 
   @Post('logout')
+  @UseGuards(JwtAuthGuard, SessionGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cerrar sesión' })
   @ApiOkResponse({ description: 'Sesión cerrada exitosamente' })
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const token = req.cookies?.jwt;
-    if (!token) throw new UnauthorizedException('Token no encontrado');
+    const user = req.user as { sub: number };
+    if (!user?.sub) throw new UnauthorizedException('Usuario no autenticado');
 
-    try {
-      const payload = this.jwtService.verify(token);
-      await this.authService.logout(payload.sub); 
-      res.clearCookie('jwt');
-      return { message: 'Sesión cerrada' };
-    } catch (err) {
-      throw new UnauthorizedException('Token inválido');
-    }
+    await this.authService.logout(user.sub);
+    res.clearCookie('jwt');
+
+    return { message: 'Sesión cerrada' };
   }
 }

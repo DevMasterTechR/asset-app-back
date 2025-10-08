@@ -47,10 +47,13 @@ export class AuthService {
     const payload = { username: user.username, sub: user.id };
     const access_token = this.jwtService.sign(payload);
 
-    // Guardar el token actual en la base de datos
+    // Guardar token y actualizar última actividad
     await this.prisma.person.update({
       where: { id: user.id },
-      data: { currentToken: access_token },
+      data: { 
+        currentToken: access_token,
+        lastActivityAt: new Date(),
+      },
     });
 
     return {
@@ -63,10 +66,13 @@ export class AuthService {
   }
 
   async logout(userId: number) {
-    // Eliminar el token actual del usuario
+    // Limpiar token y última actividad
     await this.prisma.person.update({
       where: { id: userId },
-      data: { currentToken: null },
+      data: { 
+        currentToken: null,
+        lastActivityAt: null,
+      },
     });
   }
 }

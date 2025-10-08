@@ -1,48 +1,59 @@
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
+  Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { JwtService } from '@nestjs/jwt';
-import { Request } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Request } from 'express';
 
 @Injectable()
 export class SessionGuard implements CanActivate {
-  constructor(
-    private readonly jwtService: JwtService,
-    private readonly prisma: PrismaService,
-    private readonly reflector: Reflector,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
+
+    // ✅ Typecast para evitar error TS2339
+    const user = request.user as { sub: number; username?: string };
     const token = request.cookies?.jwt;
 
-    if (!token) {
-      throw new UnauthorizedException('No se proporcionó token');
+    if (!user?.sub || !token) {
+      throw new UnauthorizedException('Usuario no autenticado');
     }
 
-    try {
-      // Verificamos que el token sea válido
-      const payload = this.jwtService.verify(token);
-      request['user'] = payload; // Opcional: añadir usuario al request
+    const person = await this.prisma.person.findUnique({
+      where: { id: user.sub },
+    });
 
-      // Verificamos si coincide con el token activo del usuario
-      const user = await this.prisma.person.findUnique({
-        where: { id: payload.sub },
-        select: { currentToken: true },
+    if (!person || person.currentToken !== token) {
+      throw new UnauthorizedException('Sesión no válida');
+    }
+
+    const lastActivity = person.lastActivityAt ?? new Date(0);
+    const now = new Date();
+    const diffMs = now.getTime() - lastActivity.getTime();
+    const maxInactivityMs = 5 * 60 * 1000; // 5 minutos
+
+    if (diffMs > maxInactivityMs) {
+      // Limpiar token si expiró por inactividad
+      await this.prisma.person.update({
+        where: { id: person.id },
+        data: {
+          currentToken: null,
+          lastActivityAt: null,
+        },
       });
 
-      if (!user || user.currentToken !== token) {
-        throw new UnauthorizedException('Sesión inválida o expirada');
-      }
-
-      return true;
-    } catch (error) {
-      throw new UnauthorizedException('Token inválido o sesión expirada');
+      throw new UnauthorizedException('Sesión expirada por inactividad');
     }
+
+    // Actualizar timestamp
+    await this.prisma.person.update({
+      where: { id: person.id },
+      data: { lastActivityAt: now },
+    });
+
+    return true;
   }
 }

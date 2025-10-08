@@ -108,6 +108,7 @@ model Person {
   updatedAt    DateTime     @updatedAt
 
   currentToken String?
+  lastActivityAt   DateTime?
 
   department Department? @relation(fields: [departmentId], references: [id])
   role       Role?       @relation(fields: [roleId], references: [id])

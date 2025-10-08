@@ -17,9 +17,8 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Asset Management API')
     .setDescription('API para gestionar activos, tarjetas SIM, credenciales, etc.')
-    .setVersion('1.0')
-    .addTag('SIM Cards')
-    .addCookieAuth('jwt') // 🔐 soporte para autenticación vía cookies
+    .setVersion('1.1')
+    .addCookieAuth('jwt') 
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
