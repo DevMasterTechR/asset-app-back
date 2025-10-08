@@ -1,63 +1,61 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
-import { CreatePersonDto } from '../people/dto/create-person.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
+import { LoginDto } from './dto/login.dto';
+import { CreatePersonDto } from '../people/dto/create-person.dto';
 import {
   ApiTags,
   ApiOperation,
   ApiBody,
   ApiCreatedResponse,
-  ApiOkResponse,
   ApiBadRequestResponse,
+  ApiOkResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
-
-class LoginDto {
-  username: string;
-  password: string;
-}
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
-    private authService: AuthService,
-    private prisma: PrismaService,
+    private readonly authService: AuthService,
+    private readonly prisma: PrismaService,
   ) {}
 
-  @Post('register')
-  @ApiOperation({ summary: 'Registro de usuario' })
-  @ApiBody({ type: CreatePersonDto })
-  @ApiCreatedResponse({ description: 'Usuario registrado exitosamente' })
-  @ApiBadRequestResponse({ description: 'Datos inválidos para registro' })
-  async register(@Body() dto: CreatePersonDto) {
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-    const user = await this.prisma.person.create({
-      data: { ...dto, password: hashedPassword },
-    });
-    return { message: 'Usuario registrado', user };
-  }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login de usuario' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        username: { type: 'string', example: 'user123' },
-        password: { type: 'string', example: 'secret123' },
-      },
-      required: ['username', 'password'],
-    },
-  })
-  @ApiOkResponse({ description: 'Login exitoso, token generado' })
+  @ApiBody({ type: LoginDto })
+  @ApiOkResponse({ description: 'Login exitoso' })
   @ApiBadRequestResponse({ description: 'Credenciales inválidas' })
-  async login(@Body() body: LoginDto) {
-    const user = await this.authService.validateUser(
-      body.username,
-      body.password,
-    );
-    return this.authService.login(user);
+  async login(@Body() body: LoginDto, @Res({ passthrough: true }) res: Response) {
+    const user = await this.authService.validateUser(body.username, body.password);
+    const token = await this.authService.login(user);
+
+    res.cookie('jwt', token.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 5 * 60 * 1000, // 5 minutos
+    });
+
+    return { message: 'Login exitoso' };
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Cerrar sesión' })
+  @ApiOkResponse({ description: 'Sesión cerrada exitosamente' })
+  async logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('jwt');
+    return { message: 'Sesión cerrada' };
   }
 }

@@ -107,6 +107,8 @@ model Person {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
+  currentToken String?
+
   department Department? @relation(fields: [departmentId], references: [id])
   role       Role?       @relation(fields: [roleId], references: [id])
   branch     Branch?     @relation(fields: [branchId], references: [id])
