@@ -47,7 +47,6 @@ export class AuthService {
     const payload = { username: user.username, sub: user.id };
     const access_token = this.jwtService.sign(payload);
 
-    // Guardar token y actualizar última actividad
     await this.prisma.person.update({
       where: { id: user.id },
       data: { 

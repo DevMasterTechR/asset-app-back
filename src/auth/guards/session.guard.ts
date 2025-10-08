@@ -36,7 +36,6 @@ export class SessionGuard implements CanActivate {
     const maxInactivityMs = 5 * 60 * 1000; // 5 minutos
 
     if (diffMs > maxInactivityMs) {
-      // Limpiar token si expiró por inactividad
       await this.prisma.person.update({
         where: { id: person.id },
         data: {
