@@ -76,4 +76,26 @@ export class AssetsService {
 
     throw new InternalServerErrorException('Error interno del servidor');
   }
+  async findOneOwnedByUser(assetId: number, userId: number) {
+  const asset = await this.prisma.asset.findFirst({
+    where: {
+      id: assetId,
+      assignedPersonId: userId, 
+    },
+  });
+
+  if (!asset) {
+    throw new NotFoundException(`Activo no encontrado o no pertenece al usuario`);
+  }
+
+  return asset;
+}
+async findAllByUser(userId: number) {
+  return this.prisma.asset.findMany({
+    where: {
+      assignedPersonId: userId, 
+    },
+  });
+}
+
 }
