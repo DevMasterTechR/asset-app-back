@@ -18,11 +18,12 @@ export class RolesGuard implements CanActivate {
         ]);
 
         if (!requiredRoles || requiredRoles.length === 0) {
-            return true; // Si no se definen roles, se permite el acceso
+            return true; 
         }
 
         const request = context.switchToHttp().getRequest();
         const user = request.user;
+        console.log('Usuario en RolesGuard:', user);
 
         if (!user || !user.role) {
             throw new ForbiddenException('Rol no encontrado');

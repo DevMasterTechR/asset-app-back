@@ -7,7 +7,6 @@ import {
     Put,
     Delete,
     ParseIntPipe,
-    UseGuards,
     Request,
     HttpCode,
     HttpStatus,
@@ -30,10 +29,8 @@ import { PeopleService } from './people.service';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { SessionGuard } from '../auth/guards/session.guard';
-import { RolesGuard } from 'src/common/guards/roles.guard';
 import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
-// ✅ Decoradores reutilizables
+
 const ApiIdParam = () =>
     ApiParam({
         name: 'id',
@@ -49,11 +46,10 @@ const ApiNotFound = (description = 'Persona no encontrada') =>
     ApiNotFoundResponse({ description });
 
 @ApiTags('People')
-@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
 @AdminOnly()
 @Controller('people')
 export class PeopleController {
-    constructor(private readonly peopleService: PeopleService) {}
+    constructor(private readonly peopleService: PeopleService) { }
 
     @Post()
 
@@ -130,7 +126,6 @@ export class PeopleController {
     }
 
     @Get('me')
-    @UseGuards(JwtAuthGuard)
     @ApiOperation({ summary: 'Obtener el perfil del usuario autenticado' })
     @ApiBearerAuth() // <- IMPORTANTE para mostrar el botón "Authorize" en Swagger
     @ApiOkResponse({

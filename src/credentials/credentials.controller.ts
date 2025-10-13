@@ -19,10 +19,6 @@ import {
 import { CredentialsService } from './credentials.service';
 import { CreateCredentialDto } from './dto/create-credential.dto';
 import { UpdateCredentialDto } from './dto/update-credential.dto';
-import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SessionGuard } from '../auth/guards/session.guard';
-import { RolesGuard } from 'src/common/guards/roles.guard';
 import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 
 const ApiIdParam = () =>
@@ -39,9 +35,9 @@ const ApiBadRequest = (description = 'Solicitud inválida') =>
 const ApiNotFound = (description = 'Credencial no encontrada') =>
     ApiNotFoundResponse({ description });
 
-@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
-@AdminOnly()
+
 @ApiTags('Credentials')
+@AdminOnly()
 @Controller('credentials')
 export class CredentialsController {
     constructor(private readonly service: CredentialsService) { }
@@ -72,7 +68,7 @@ export class CredentialsController {
     }
 
     @Get(':id')
-    
+
     @ApiOperation({ summary: 'Obtener una credencial por ID' })
     @ApiIdParam()
     @ApiOkResponse({

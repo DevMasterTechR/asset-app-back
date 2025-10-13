@@ -11,22 +11,15 @@ import {
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
-
-import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SessionGuard } from '../auth/guards/session.guard';
-
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { RolesGuard } from 'src/common/guards/roles.guard';
 import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 
 
 @ApiTags('Roles')
-@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
-@AdminOnly() 
+@AdminOnly()
 @Controller('roles')
 export class RolesController {
-    constructor(private readonly rolesService: RolesService) {}
+    constructor(private readonly rolesService: RolesService) { }
 
     @Post()
     @ApiOperation({ summary: 'Crear un nuevo rol' })

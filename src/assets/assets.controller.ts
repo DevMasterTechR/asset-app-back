@@ -29,18 +29,12 @@ import { AssetsService } from './assets.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
 import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
-import { UserOnly } from 'src/common/decorators/user-only.decorator';
-import { RequestWithUser } from 'src/common/interfaces/request-with-user.interface';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { SessionGuard } from 'src/auth/guards/session.guard';
-import { RolesGuard } from 'src/common/guards/roles.guard';
 
 @ApiTags('Assets')
-@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
 @AdminOnly()
 @Controller('assets')
 export class AssetsController {
-    constructor(private readonly assetsService: AssetsService) {}
+    constructor(private readonly assetsService: AssetsService) { }
 
     @Post()
     @AdminOnly()
@@ -94,34 +88,5 @@ export class AssetsController {
     @ApiBadRequestResponse({ description: 'ID inválido' })
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.assetsService.remove(id);
-    }
-
-    @Get('my-assets')
-    @ApiOperation({ summary: 'Obtener activos propios del usuario autenticado' })
-    findMyAssets(@Req() req: RequestWithUser) {
-        const userId = req.user?.sub;
-        if (!userId) {
-        throw new BadRequestException('ID de usuario no encontrado en la sesión');
-        }
-
-        return this.assetsService.findAllByUser(userId);
-    }
-
-    @Get('my-assets/:id')
-    @UserOnly()
-    @ApiOperation({ summary: 'Obtener un activo propio por ID' })
-    @ApiParam({ name: 'id', type: 'number', example: 1 })
-    @ApiOkResponse({ description: 'Activo encontrado', type: CreateAssetDto })
-    @ApiNotFoundResponse({ description: 'Activo no encontrado o no pertenece al usuario' })
-    findMyAssetById(
-        @Param('id', ParseIntPipe) id: number,
-        @Req() req: RequestWithUser,
-    ) {
-                const userId = req.user?.sub;
-        if (!userId) {
-        throw new BadRequestException('ID de usuario no encontrado en la sesión');
-        }
-
-        return this.assetsService.findOneOwnedByUser(id, userId);
     }
 }

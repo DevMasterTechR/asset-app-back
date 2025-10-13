@@ -61,7 +61,7 @@ export class AssetsService {
     }
   }
 
-  // Manejo centralizado de errores de Prisma
+
   private handlePrismaError(error: any, id?: number): never {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       switch (error.code) {

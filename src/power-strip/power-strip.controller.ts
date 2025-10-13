@@ -26,11 +26,6 @@ import {
 import { PowerStripService } from './power-strip.service';
 import { CreatePowerStripDto } from './dto/create-power-strip.dto';
 import { UpdatePowerStripDto } from './dto/update-power-strip.dto';
-
-import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SessionGuard } from '../auth/guards/session.guard';
-import { RolesGuard } from 'src/common/guards/roles.guard';
 import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 
 // ✅ Decoradores reutilizables
@@ -50,7 +45,6 @@ const ApiNotFound = (description = 'Multicontacto no encontrado') =>
 
 
 @ApiTags('Power Strips')
-@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
 @AdminOnly()
 @Controller('power-strips')
 export class PowerStripController {
