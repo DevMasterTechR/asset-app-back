@@ -30,6 +30,8 @@ import { UpdatePowerStripDto } from './dto/update-power-strip.dto';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SessionGuard } from '../auth/guards/session.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 
 // ✅ Decoradores reutilizables
 const ApiIdParam = () =>
@@ -46,8 +48,10 @@ const ApiBadRequest = (description = 'Datos inválidos') =>
 const ApiNotFound = (description = 'Multicontacto no encontrado') =>
   ApiNotFoundResponse({ description });
 
-@UseGuards(JwtAuthGuard, SessionGuard)
+
 @ApiTags('Power Strips')
+@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
+@AdminOnly()
 @Controller('power-strips')
 export class PowerStripController {
   constructor(private readonly service: PowerStripService) {}

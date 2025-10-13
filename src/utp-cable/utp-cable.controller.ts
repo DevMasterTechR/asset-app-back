@@ -30,11 +30,13 @@ import { UpdateUtpCableDto } from './dto/update-utp-cable.dto';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SessionGuard } from '../auth/guards/session.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 
-@UseGuards(JwtAuthGuard, SessionGuard)
+@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
+@AdminOnly()
 @ApiTags('UTP Cables')
 @Controller('utp-cables')
-// @ApiBearerAuth() // Descomenta si usas autenticación JWT
 export class UtpCableController {
   constructor(private readonly utpCableService: UtpCableService) {}
 

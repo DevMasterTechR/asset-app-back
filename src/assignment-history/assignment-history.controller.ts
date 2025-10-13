@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { AssignmentHistoryService } from './assignment-history.service';
 import { CreateAssignmentHistoryDto } from './dto/create-assignment-history.dto';
@@ -24,8 +25,14 @@ import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
+import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { SessionGuard } from 'src/auth/guards/session.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
 
 @ApiTags('Assignment History')
+@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
+@AdminOnly()
 @Controller('assignment-history')
 export class AssignmentHistoryController {
   constructor(private readonly service: AssignmentHistoryService) {}

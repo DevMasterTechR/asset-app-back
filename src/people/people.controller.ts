@@ -31,6 +31,8 @@ import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SessionGuard } from '../auth/guards/session.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 // ✅ Decoradores reutilizables
 const ApiIdParam = () =>
     ApiParam({
@@ -47,12 +49,14 @@ const ApiNotFound = (description = 'Persona no encontrada') =>
     ApiNotFoundResponse({ description });
 
 @ApiTags('People')
+@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
+@AdminOnly()
 @Controller('people')
 export class PeopleController {
     constructor(private readonly peopleService: PeopleService) {}
 
     @Post()
-    @UseGuards(JwtAuthGuard, SessionGuard)
+
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ summary: 'Crear una nueva persona' })
     @ApiCreatedResponse({
@@ -66,7 +70,7 @@ export class PeopleController {
     }
 
     @Get()
-    @UseGuards(JwtAuthGuard, SessionGuard)
+
     @ApiOperation({ summary: 'Obtener todas las personas' })
     @ApiOkResponse({
         description: 'Lista de personas',
@@ -77,7 +81,7 @@ export class PeopleController {
     }
 
     @Get(':id')
-    @UseGuards(JwtAuthGuard, SessionGuard)
+
     @ApiOperation({ summary: 'Obtener persona por ID' })
     @ApiIdParam()
     @ApiOkResponse({ description: 'Persona encontrada', type: CreatePersonDto })
@@ -91,7 +95,7 @@ export class PeopleController {
     }
 
     @Put(':id')
-    @UseGuards(JwtAuthGuard, SessionGuard)
+
     @ApiOperation({ summary: 'Actualizar una persona' })
     @ApiIdParam()
     @ApiBody({ type: UpdatePersonDto })
@@ -112,7 +116,7 @@ export class PeopleController {
     }
 
     @Delete(':id')
-    @UseGuards(JwtAuthGuard, SessionGuard)
+
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ summary: 'Eliminar una persona' })
     @ApiIdParam()

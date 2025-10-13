@@ -33,9 +33,11 @@ import { UserOnly } from 'src/common/decorators/user-only.decorator';
 import { RequestWithUser } from 'src/common/interfaces/request-with-user.interface';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { SessionGuard } from 'src/auth/guards/session.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
 
 @ApiTags('Assets')
-@UseGuards(JwtAuthGuard, SessionGuard)
+@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
+@AdminOnly()
 @Controller('assets')
 export class AssetsController {
     constructor(private readonly assetsService: AssetsService) {}

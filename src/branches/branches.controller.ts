@@ -30,6 +30,8 @@ import { UpdateBranchDto } from './dto/update-branch.dto';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SessionGuard } from '../auth/guards/session.guard';
+import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
+import { RolesGuard } from 'src/common/guards/roles.guard';
 
 // ✅ Reutilizables
 const ApiIdParam = () =>
@@ -46,8 +48,10 @@ const ApiBadRequest = (description = 'Solicitud inválida') =>
 const ApiNotFound = (description = 'Sucursal no encontrada') =>
   ApiNotFoundResponse({ description });
 
-@UseGuards(JwtAuthGuard, SessionGuard)
+
 @ApiTags('Branches')
+@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
+@AdminOnly()
 @Controller('branches')
 export class BranchesController {
   constructor(private readonly branchesService: BranchesService) {}

@@ -30,6 +30,8 @@ import { UpdateSimCardDto } from './dto/update-sim-card.dto';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SessionGuard } from '../auth/guards/session.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 
 // Decoradores auxiliares
 const ApiIdParam = () =>
@@ -46,8 +48,10 @@ const ApiBadRequest = (description = 'Datos inválidos') =>
 const ApiNotFound = (description = 'Tarjeta SIM no encontrada') =>
   ApiNotFoundResponse({ description });
 
-@UseGuards(JwtAuthGuard, SessionGuard)
+
 @ApiTags('Sim Cards')
+@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
+@AdminOnly()
 @Controller('sim-cards')
 export class SimCardsController {
   constructor(private readonly service: SimCardsService) {}

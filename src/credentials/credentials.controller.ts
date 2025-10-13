@@ -23,9 +23,7 @@ import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SessionGuard } from '../auth/guards/session.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
-import { Roles } from 'src/common/decorators/roles.decorator';
 import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
-import { UserOnly } from 'src/common/decorators/user-only.decorator';
 
 const ApiIdParam = () =>
     ApiParam({
@@ -42,6 +40,7 @@ const ApiNotFound = (description = 'Credencial no encontrada') =>
     ApiNotFoundResponse({ description });
 
 @UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
+@AdminOnly()
 @ApiTags('Credentials')
 @Controller('credentials')
 export class CredentialsController {
@@ -62,7 +61,7 @@ export class CredentialsController {
     }
 
     @Get()
-    @AdminOnly()
+
     @ApiOperation({ summary: 'Obtener todas las credenciales' })
     @ApiOkResponse({
         description: 'Lista de credenciales',
@@ -73,7 +72,7 @@ export class CredentialsController {
     }
 
     @Get(':id')
-    @AdminOnly()
+    
     @ApiOperation({ summary: 'Obtener una credencial por ID' })
     @ApiIdParam()
     @ApiOkResponse({
@@ -91,6 +90,7 @@ export class CredentialsController {
     }
 
     @Put(':id')
+
     @ApiOperation({ summary: 'Actualizar una credencial' })
     @ApiIdParam()
     @ApiBody({ type: UpdateCredentialDto })
@@ -112,6 +112,7 @@ export class CredentialsController {
     }
 
     @Delete(':id')
+
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ summary: 'Eliminar una credencial' })
     @ApiIdParam()

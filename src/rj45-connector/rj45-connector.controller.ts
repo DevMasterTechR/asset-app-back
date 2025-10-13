@@ -22,9 +22,13 @@ import {
   ApiResponse,
   ApiParam,
 } from '@nestjs/swagger';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 
-@UseGuards(JwtAuthGuard, SessionGuard)
-@ApiTags('RJ45 Connectors') // Swagger: agrupa el controlador
+
+@ApiTags('RJ45 Connectors')
+@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
+@AdminOnly()
 @Controller('rj45-connectors')
 export class Rj45ConnectorController {
   constructor(private readonly service: Rj45ConnectorService) {}

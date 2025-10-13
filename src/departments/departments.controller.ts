@@ -30,6 +30,8 @@ import { UpdateDepartmentDto } from './dto/update-department.dto';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SessionGuard } from '../auth/guards/session.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 
 // ✅ Decoradores reutilizables
 const ApiIdParam = () =>
@@ -46,7 +48,8 @@ const ApiBadRequest = (description = 'Solicitud inválida') =>
 const ApiNotFound = (description = 'Departamento no encontrado') =>
     ApiNotFoundResponse({ description });
 
-@UseGuards(JwtAuthGuard, SessionGuard)
+@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
+@AdminOnly()
 @ApiTags('Departments')
 @Controller('departments')
 export class DepartmentsController {

@@ -17,9 +17,13 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SessionGuard } from '../auth/guards/session.guard';
 
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 
-@UseGuards(JwtAuthGuard, SessionGuard)
-@ApiTags('Roles') // <--- Agrupa este controlador en Swagger
+
+@ApiTags('Roles')
+@UseGuards(JwtAuthGuard, SessionGuard,RolesGuard)
+@AdminOnly() 
 @Controller('roles')
 export class RolesController {
     constructor(private readonly rolesService: RolesService) {}
