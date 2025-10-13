@@ -29,6 +29,7 @@ export class AuthService {
   async validateUser(username: string, password: string) {
     const user = await this.prisma.person.findUnique({
       where: { username },
+      include: { role: true },
     });
 
     if (!user || !user.password) {
@@ -44,7 +45,7 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { username: user.username, sub: user.id };
+    const payload = { username: user.username, sub: user.id, role: user.role?.name, };
     const access_token = this.jwtService.sign(payload);
 
     await this.prisma.person.update({
@@ -60,12 +61,12 @@ export class AuthService {
       user: {
         id: user.id,
         username: user.username,
+        role: user.role,
       },
     };
   }
 
   async logout(userId: number) {
-    // Limpiar token y última actividad
     await this.prisma.person.update({
       where: { id: userId },
       data: { 
