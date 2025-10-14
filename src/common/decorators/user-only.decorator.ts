@@ -4,7 +4,7 @@ import { Roles } from './roles.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { SessionGuard } from 'src/auth/guards/session.guard';
 
-export function AdminOnly() {
+export function UserOnly() {
   return applyDecorators(
     UseGuards(JwtAuthGuard, SessionGuard, RolesGuard),
     Roles('Usuario'),

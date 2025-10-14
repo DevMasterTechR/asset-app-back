@@ -7,7 +7,6 @@ import {
     Put,
     Delete,
     ParseIntPipe,
-    Request,
     HttpCode,
     HttpStatus,
     NotFoundException,
@@ -22,14 +21,13 @@ import {
     ApiNoContentResponse,
     ApiBadRequestResponse,
     ApiNotFoundResponse,
-    ApiBearerAuth,
 } from '@nestjs/swagger';
 
-import { PeopleService } from './people.service';
-import { CreatePersonDto } from './dto/create-person.dto';
-import { UpdatePersonDto } from './dto/update-person.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
 import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
+import { PeopleService } from '../people.service';
+import { CreatePersonDto } from '../dto/create-person.dto';
+import { UpdatePersonDto } from '../dto/update-person.dto';
 
 const ApiIdParam = () =>
     ApiParam({
@@ -48,7 +46,7 @@ const ApiNotFound = (description = 'Persona no encontrada') =>
 @ApiTags('People')
 @AdminOnly()
 @Controller('people')
-export class PeopleController {
+export class AdminPeopleController {
     constructor(private readonly peopleService: PeopleService) { }
 
     @Post()
@@ -125,23 +123,4 @@ export class PeopleController {
             throw new NotFoundException(`Person with ID ${id} not found`);
     }
 
-    @Get('me')
-    @ApiOperation({ summary: 'Obtener el perfil del usuario autenticado' })
-    @ApiBearerAuth() // <- IMPORTANTE para mostrar el botón "Authorize" en Swagger
-    @ApiOkResponse({
-        description: 'Perfil del usuario autenticado',
-        schema: {
-            example: {
-                sub: 12,
-                email: 'usuario@ejemplo.com',
-                role: 'ADMIN',
-                iat: 1699999999,
-                exp: 1700003599,
-            },
-        },
-    })
-    getProfile(@Request() req) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-        return req.user;
-    }
 }

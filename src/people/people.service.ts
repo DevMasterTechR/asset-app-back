@@ -80,6 +80,18 @@ export class PeopleService {
     }
   }
 
+  async findUserDetails(id: number) {
+  return this.prisma.person.findUnique({
+    where: { id },
+    include: {
+      branch: true,
+      department: true,
+      role: true,
+      assets: true,
+    },
+  });
+}
+
   // Manejo de errores de Prisma
   private handlePrismaError(error: any, id?: number): never {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
