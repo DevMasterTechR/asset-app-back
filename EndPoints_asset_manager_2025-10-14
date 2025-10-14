@@ -1,0 +1,2002 @@
+type: collection.insomnia.rest/5.0
+name: Scratch Pad
+meta:
+  id: wrk_scratchpad
+  created: 1759777947704
+  modified: 1759777947704
+  description: ""
+collection:
+  - name: Departamento
+    meta:
+      id: fld_72e82e4ea4824247a9d1c99e8b457ba8
+      created: 1759780214179
+      modified: 1759780273550
+      sortKey: -1759778520338
+      description: ""
+    children:
+      - url: http://localhost:3000/departments
+        name: Crear un departamento
+        meta:
+          id: req_893ec773964041be99d2818875f4767a
+          created: 1759778056835
+          modified: 1759871294524
+          isPrivate: false
+          description: ""
+          sortKey: -1759780231720
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "Recursos Humanos",
+              "description": "Gestiona al personal"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/departments/1
+        name: Ver uno por ID
+        meta:
+          id: req_563c3c5829a24926aa079d859b776401
+          created: 1759778075309
+          modified: 1759780240549
+          isPrivate: false
+          description: ""
+          sortKey: -1759780231820
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/departments
+        name: Ver todos los departamentos
+        meta:
+          id: req_a62a74f3e6e6473f98ce3e6e60842d7a
+          created: 1759778145063
+          modified: 1759780250189
+          isPrivate: false
+          description: ""
+          sortKey: -1759780231845
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/departments/1
+        name: Actualizar un departamento
+        meta:
+          id: req_83bf743c304a46ecaf2229ab79346242
+          created: 1759778276824
+          modified: 1759780238333
+          isPrivate: false
+          description: ""
+          sortKey: -1759780231920
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "RRHH",
+              "description": "Área de personal actualizada"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/departments/1
+        name: Eliminar un departamento
+        meta:
+          id: req_d594001196994f14b22e4316affe540c
+          created: 1759778329632
+          modified: 1759780232054
+          isPrivate: false
+          description: ""
+          sortKey: -1759780232020
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Rol
+    meta:
+      id: fld_1e0f980be7824090a4e20a7448f591c3
+      created: 1759780288176
+      modified: 1759780288176
+      sortKey: -1759780288176
+      description: ""
+    children:
+      - url: http://localhost:3000/roles
+        name: Crear un rol
+        meta:
+          id: req_76418dd7b2a546ebac8c8a0406a46d6a
+          created: 1759778711044
+          modified: 1760369124186
+          isPrivate: false
+          description: ""
+          sortKey: -1759780365916
+        method: POST
+        body:
+          mimeType: application/json
+          text: >-
+            {
+            	"id": 2,
+              "name": "Usuario",
+              "description": "Tiene acceso a ver sus activos asisgnados en el sistema"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/roles
+        name: Obtener todos los roles
+        meta:
+          id: req_8736130b1a424045a8b6ff013ae398af
+          created: 1759778753016
+          modified: 1759780376895
+          isPrivate: false
+          description: ""
+          sortKey: -1759780366041
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/roles/1
+        name: Obtener un rol por ID
+        meta:
+          id: req_4a254dfd2ffe40259e53eeba60b2349c
+          created: 1759778772954
+          modified: 1759871486329
+          isPrivate: false
+          description: ""
+          sortKey: -1759780366066
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/roles/1
+        name: Actualizar un rol
+        meta:
+          id: req_d541edb4e4e24d0a80367bf42a55fa8e
+          created: 1759778787501
+          modified: 1759780368634
+          isPrivate: false
+          description: ""
+          sortKey: -1759780366016
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "Admin",
+              "description": "Permisos actualizados"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/roles/1
+        name: Eliminar un rol
+        meta:
+          id: req_e798d3db851f4497affafc68257726bb
+          created: 1759778821057
+          modified: 1759871491543
+          isPrivate: false
+          description: ""
+          sortKey: -1759780366116
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Sucursal
+    meta:
+      id: fld_4079b3c579c24e7d8b342e3a2b0b28cd
+      created: 1759780294724
+      modified: 1759871877778
+      sortKey: -1759780294724
+      description: ""
+    children:
+      - url: http://localhost:3000/branches
+        name: Crear una sucursal
+        meta:
+          id: req_311536de3f1c4f61b8fecc38566f6134
+          created: 1759779461863
+          modified: 1759871626881
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307232
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"id": 1,
+              "name": "Sucursal Central",
+              "address": "Av. Siempre Viva 123",
+              "region": "Norte"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/branches
+        name: Obtener todas las sucursales
+        meta:
+          id: req_a773d43134744cfdaace3773d4ec49a0
+          created: 1759779522627
+          modified: 1759780326056
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307632
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/branches/3
+        name: Actualizar una sucursal
+        meta:
+          id: req_84b3317600f649fb8b1d13dc42400b0e
+          created: 1759779752574
+          modified: 1759871638432
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307282
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "Sucursal Actualizada",
+              "region": "Sur"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/branches/1
+        name: Eliminar una sucursal
+        meta:
+          id: req_e204db1c4f9843d7af9ad710d890545d
+          created: 1759779756903
+          modified: 1759780399723
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307732
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/branches/6
+        name: Obtener una  sucursal
+        meta:
+          id: req_b0db5c9f8a664a97869d235a3d02ce44
+          created: 1759779999123
+          modified: 1759871647609
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307432
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Almacenamiento
+    meta:
+      id: fld_48a1537aa8284a85abac172cc6fb2e50
+      created: 1759781714586
+      modified: 1759855062152
+      sortKey: -1759780294974
+      description: ""
+    children:
+      - url: http://localhost:3000/storage
+        name: Crear un almacenamiento
+        meta:
+          id: req_cff9cfd73c444ec095f600bb470bc66f
+          created: 1759781714587
+          modified: 1759874156822
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307232
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "assetId": 6,
+              "type": "HDD",
+              "capacityGb": 48,
+              "notes": "Disco principal"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/storage
+        name: Obtener todas las almacenamiento
+        meta:
+          id: req_d592f843a5064742a706867c3cf2d3f5
+          created: 1759781714588
+          modified: 1759781976847
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307632
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/storage/1
+        name: Actualizar una almacenamiento
+        meta:
+          id: req_b5d9ab653ae445738567c7074fe1ca9f
+          created: 1759781714589
+          modified: 1759781970719
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307282
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |
+            {
+              "capacityGb": 1024,
+              "notes": "Ampliado a 1TB"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/storage/1
+        name: Eliminar una almacenamiento
+        meta:
+          id: req_bd734f5b0445428b9d882d6632e3cf20
+          created: 1759781714590
+          modified: 1759781986331
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307732
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/storage/1
+        name: Obtener una  almacenamiento
+        meta:
+          id: req_5c2cf28bd5a2469f8e2dbd6be80fbd38
+          created: 1759781714592
+          modified: 1759790750888
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307432
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Activos
+    meta:
+      id: fld_620de898e7c347639630fc21ea85e7c2
+      created: 1759783079476
+      modified: 1759789094212
+      sortKey: -1759780294961.5
+      description: ""
+    children:
+      - url: http://localhost:3000/assets
+        name: Crear un activo
+        meta:
+          id: req_43ab70a5e880472eba83c251812cda04
+          created: 1759783079477
+          modified: 1759874078548
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307232
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+
+            	"assetCode": "ASSET-001",
+            	"assetType": "cell",
+            	"serialNumber": "SN-1111",
+            	"brand": "HP",
+            	"model": "ProBook",
+            	"status": "available",
+            	"branchId": 2,
+            	"assignedPersonId": 5,
+            	"purchaseDate": "2023-10-10T00:00:00.000Z",
+            	"deliveryDate": "2023-10-12T00:00:00.000Z",
+            	"receivedDate": "2023-10-13T00:00:00.000Z",
+            	"notes": "Equipo nuevo",
+            	"attributesJson": {
+            		"cpu": "Intel i5",
+            		"ram": "16GB"
+            	}
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/assets
+        name: Obtener todos los activos
+        meta:
+          id: req_9f3af91607ee419cb14bec0a51d9ee1b
+          created: 1759783079478
+          modified: 1759783174886
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307632
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/assets/1
+        name: Actualizar un activo
+        meta:
+          id: req_9362f397ad3047fdae2f10b87c4b1221
+          created: 1759783079482
+          modified: 1759790175894
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307282
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |
+            {
+              "assetCode": "ASSET-002",
+              "assetType": "cell",
+              "serialNumber": "SN-123456",
+              "brand": "HP",
+              "model": "ProBook",
+              "status": "available",
+              "branchId": 1,
+              "assignedPersonId": 2,
+              "purchaseDate": "2023-10-10T00:00:00.000Z",
+              "deliveryDate": "2023-10-12T00:00:00.000Z",
+              "receivedDate": "2023-10-13T00:00:00.000Z",
+              "notes": "Equipo nuevo",
+              "attributesJson": {
+                "cpu": "Intel i5",
+                "ram": "16GB"
+              }
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/assets/1
+        name: Eliminar un activo
+        meta:
+          id: req_ec3f9d71f7e84ee69a56f7fb72e41e4b
+          created: 1759783079491
+          modified: 1759783177448
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307732
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/my-assets/6
+        name: Obtener un  activo
+        meta:
+          id: req_adb5605144ec4ee79014e0e048afa023
+          created: 1759783079493
+          modified: 1760386802690
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307432
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Persona
+    meta:
+      id: fld_b5ac7cf2a8ae4359921170e88ad7a7d8
+      created: 1759784215052
+      modified: 1759789089925
+      sortKey: -1759780294949
+      description: ""
+    children:
+      - url: http://localhost:3000/people
+        name: Crear una persona
+        meta:
+          id: req_827080e28eaa4218a545d76fedc2ade7
+          created: 1759784215053
+          modified: 1759872600693
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307232
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"id": 4,
+              "nationalId": "123456744",
+              "firstName": "Juan",
+              "lastName": "Pérez",
+              "username": "jperez",
+              "password": "supersegura123",
+              "status": "active",
+              "departmentId": 1,
+              "roleId": 2,
+              "branchId": 2
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/people
+        name: Obtener todas las personas
+        meta:
+          id: req_e15ba4fb39884038999fd3c7b74d6848
+          created: 1759784215054
+          modified: 1759789001586
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307632
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/people/4
+        name: Actualizar una persona
+        meta:
+          id: req_2de975c60b2442889a73ed0ad70ea400
+          created: 1759784215055
+          modified: 1759872486176
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307282
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |
+            {
+              "status": "inactive"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/people/4
+        name: Eliminar una persona
+        meta:
+          id: req_f623cc76eabd40edbab6b0e2517a8319
+          created: 1759784215055
+          modified: 1759872528780
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307732
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/people/5
+        name: Obtener una persona
+        meta:
+          id: req_ca142142954d40b28cca1c7e4fc9d73b
+          created: 1759784215056
+          modified: 1760393967637
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307432
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Byocrypt JWT
+    meta:
+      id: fld_f822920ae0ce4c6cbf8a72f0c82db6b9
+      created: 1759784771939
+      modified: 1760391729122
+      sortKey: -1759784772939
+      description: ""
+    children:
+      - url: http://localhost:3000/auth/login
+        name: Login
+        meta:
+          id: req_74093987d4394096993281f1a1d45e6d
+          created: 1759784829426
+          modified: 1760460552362
+          isPrivate: false
+          description: ""
+          sortKey: -1759784781409
+        method: POST
+        body:
+          mimeType: application/json
+          text: |
+            {
+              "username": "sianasco",
+              "password": "sianasco"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/auth/logout
+        name: Logout
+        meta:
+          id: req_7f518410e0314cc683e6e296d1f2b824
+          created: 1759941632054
+          modified: 1759953372608
+          isPrivate: false
+          description: ""
+          sortKey: -1759784781509
+        method: POST
+        body:
+          mimeType: application/json
+          text: ""
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Tintas
+    meta:
+      id: fld_8c509a41ca3241d890d182df774640a4
+      created: 1759848162054
+      modified: 1759848166152
+      sortKey: -1759782533456.5
+      description: ""
+    children:
+      - url: http://localhost:3000/inks
+        name: Crear un tinta
+        meta:
+          id: req_ce70f974f74b4c2b97ea2b81f5f931f2
+          created: 1759848162055
+          modified: 1759848437359
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307232
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "brand": "HP",
+              "model": "952XL",
+              "color": "Cyan",
+              "quantity": 5,
+              "inkType": "Pigment",
+              "purchaseDate": "2025-10-01T00:00:00.000Z",
+              "usageDate": "2025-10-05T00:00:00.000Z",
+              "notes": "Comprada para impresora del piso 2"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/inks
+        name: Obtener todas las tintas
+        meta:
+          id: req_97b6de7818a849e6b49ffe8cc411fb74
+          created: 1759848162057
+          modified: 1759848336011
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307632
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/inks/1
+        name: Actualizar una almacenamiento
+        meta:
+          id: req_048fc76a58ad49529301f71458667c91
+          created: 1759848162058
+          modified: 1759848674190
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307282
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "quantity": 10,
+              "notes": "Actualizado después de nuevo pedido"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/inks/1
+        name: Eliminar una tinta
+        meta:
+          id: req_347794559295423c8a7c3c947904c416
+          created: 1759848162059
+          modified: 1759848364691
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307732
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/inks/1
+        name: Obtener una  tinta
+        meta:
+          id: req_b7c2150e6fd24ccab318c572984fb8f9
+          created: 1759848162061
+          modified: 1759848341587
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307432
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Cable UTP
+    meta:
+      id: fld_dbb576c055b24fd69f54a46b064fffb1
+      created: 1759850034212
+      modified: 1759850039134
+      sortKey: -1759783652697.75
+      description: ""
+    children:
+      - url: http://localhost:3000/utp-cables
+        name: Crear un cable UTP
+        meta:
+          id: req_3eaae94786dd436993d9d09c7daf6140
+          created: 1759850034213
+          modified: 1759850237158
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307232
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "brand": "TP-Link",
+              "type": "Cat6",
+              "material": "Cobre",
+              "lengthMeters": 50,
+              "color": "Azul",
+              "purchaseDate": "2025-10-01T00:00:00.000Z",
+              "usageDate": "2025-10-05T00:00:00.000Z",
+              "notes": "Cable para red principal"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/utp-cables
+        name: Obtener todos los cables UTP
+        meta:
+          id: req_69d1611870544196bfba11590678cc3f
+          created: 1759850034214
+          modified: 1759850223803
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307632
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/utp-cables/1
+        name: Actualizar un cable UTP
+        meta:
+          id: req_a5daf250cacd4d48a062954b92750cd5
+          created: 1759850034215
+          modified: 1759850210582
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307282
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "lengthMeters": 75,
+              "notes": "Reemplazado por mayor longitud"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/utp-cables/2
+        name: Eliminar un cable UTP
+        meta:
+          id: req_dfad038968f44e2c983af3d13dfa0bc2
+          created: 1759850034216
+          modified: 1759850261150
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307732
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/utp-cables/1
+        name: Obtener un cable UTP
+        meta:
+          id: req_7676bc0476714ea090d3424a5013f357
+          created: 1759850034217
+          modified: 1759850219163
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307432
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Extenciones
+    meta:
+      id: fld_d781a19345b949c5adc8cfb9287fc9b2
+      created: 1759851410912
+      modified: 1759855369413
+      sortKey: -1759784772239
+      description: ""
+    children:
+      - url: http://localhost:3000/power-strips
+        name: Crear una extencion
+        meta:
+          id: req_f3744e480e664cb8890e0534b0ff3c79
+          created: 1759851410913
+          modified: 1759855383142
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307232
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "brand": "Tripp Lite",
+              "model": "PS6",
+              "outletCount": 6,
+              "lengthMeters": 1.80,
+              "color": "Black",
+              "capacity": 1800,
+              "purchaseDate": "2025-09-01T00:00:00.000Z",
+              "usageDate": "2025-09-10T00:00:00.000Z",
+              "notes": "Para laboratorio de redes"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/power-strips
+        name: Obtener todas las extenciones
+        meta:
+          id: req_8088d01689bd4bd9903c8bb28aae8c1b
+          created: 1759851410914
+          modified: 1759855166489
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307632
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/power-strips/2
+        name: Actualizar una extencion
+        meta:
+          id: req_d9a924d19b4546238400e91672b7932f
+          created: 1759851410915
+          modified: 1759855491426
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307282
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "brand": "Forza",
+              "model": "SP601",
+              "outletCount": 6,
+              "lengthMeters": 2.00,
+              "color": "White",
+              "capacity": 2000,
+              "purchaseDate": "2025-08-15T00:00:00.000Z",
+              "usageDate": "2025-08-20T00:00:00.000Z",
+              "notes": "Reemplazo completo"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/power-strips/1
+        name: Eliminar una extencion
+        meta:
+          id: req_e7173130c4734cf692cd612bfd8e8a12
+          created: 1759851410916
+          modified: 1759855503234
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307732
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/power-strips/2
+        name: Obtener una extencion
+        meta:
+          id: req_b9d33c4b0b2f47b296f647676971bffa
+          created: 1759851410917
+          modified: 1759855161445
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307432
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: "Conector RJ45 "
+    meta:
+      id: fld_32d5ffcfa7b544dab09dbaaeda36f160
+      created: 1759855039906
+      modified: 1759855350225
+      sortKey: -1759784772089
+      description: ""
+    children:
+      - url: http://localhost:3000/rj45-connectors
+        name: "Crear un conector RJ45 "
+        meta:
+          id: req_bf86966462c64c0988aab2009c013ec1
+          created: 1759855039907
+          modified: 1759855039907
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307232
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "model": "CAT6 UTP",
+              "quantityUnits": 100,
+              "material": "Plastic",
+              "type": "RJ45 Male",
+              "purchaseDate": "2025-10-01T00:00:00.000Z",
+              "usageDate": "2025-10-05T00:00:00.000Z",
+              "notes": "Para instalaciones en oficina"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/rj45-connectors
+        name: Obtener todos los conectores RJ45
+        meta:
+          id: req_2dc93a5196c143deafb596da3b8bc1c8
+          created: 1759855039908
+          modified: 1759855039908
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307632
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/rj45-connectors/4
+        name: "Actualizar un conector RJ45 "
+        meta:
+          id: req_1909297a89f04d08b93830a0a95595ba
+          created: 1759855039909
+          modified: 1759855039909
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307282
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "quantityUnits": 120,
+              "notes": "Se usaron algunos, quedan menos"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/rj45-connectors/3
+        name: Eliminar un conector RJ45
+        meta:
+          id: req_0ce22055c6c64796a24318fd35b656c3
+          created: 1759855039910
+          modified: 1759855039910
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307732
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/rj45-connectors/2
+        name: Obtener un conector RJ45
+        meta:
+          id: req_84748778ae024b0aaa545d20f722f3be
+          created: 1759855039911
+          modified: 1759855039911
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307432
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Historial de Asignacion
+    meta:
+      id: fld_bbe0ffae675549649f0b11937609a170
+      created: 1759857314963
+      modified: 1759857328038
+      sortKey: -1759784772439
+      description: ""
+    children:
+      - url: http://localhost:3000/assignment-history
+        name: Crear una asignacion
+        meta:
+          id: req_ccb98134a8cf41e6b39823704faf44cd
+          created: 1759857314964
+          modified: 1759874292832
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307232
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "assetId": 4,
+              "personId": 5,
+              "branchId": 2,
+              "assignmentDate": "2025-10-07T14:00:00.000Z",
+              "deliveryCondition": "good",
+              "deliveryNotes": "Entregado en buen estado"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/assignment-history
+        name: Obtener todas las asignaciones
+        meta:
+          id: req_5cc139073ae64545aca4f6b89b62f6f8
+          created: 1759857314965
+          modified: 1759857400995
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307632
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/assignment-history/1
+        name: Actualizar una asignacion
+        meta:
+          id: req_6344fce8bcc64b919130feea0cc97dc6
+          created: 1759857314966
+          modified: 1759857646757
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307282
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "returnDate": "2025-10-10T14:00:00.000Z",
+              "returnCondition": "fair",
+              "returnNotes": "Devuelto con rayones menores"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/assignment-history/1
+        name: Eliminar una asignacion
+        meta:
+          id: req_267607aacd384ae6a73039c9b6bf8cb1
+          created: 1759857314967
+          modified: 1759857414077
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307732
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/assignment-history/1
+        name: Obtener una asignacion
+        meta:
+          id: req_e1639ca86d294e3296725b5ff0ff0a18
+          created: 1759857314968
+          modified: 1759857656552
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307432
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Credenciales
+    meta:
+      id: fld_205e721d7a63424ebefa8ce77dc98913
+      created: 1759858003132
+      modified: 1759865649373
+      sortKey: -1759784772639
+      description: ""
+    children:
+      - url: http://localhost:3000/credentials
+        name: Crear una credencial
+        meta:
+          id: req_fe1fb2dbe53146018fe0eb0ba5837f73
+          created: 1759858003133
+          modified: 1759874322463
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307232
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "personId": 5,
+              "username": "usuario123",
+              "password": "secretoSeguro123",
+              "system": "crm",
+              "notes": "Acceso temporal"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/credentials
+        name: Obtener todas las credenciales
+        meta:
+          id: req_9c8de762fcbb4faca50366258797b9f3
+          created: 1759858003134
+          modified: 1760386983930
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307632
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/credentials/1
+        name: Actualizar una credencial
+        meta:
+          id: req_c67357e919c142e38844dfb5c2335985
+          created: 1759858003135
+          modified: 1759858124917
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307282
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |
+            {
+              "password": "nuevoPasswordSeguro456",
+              "notes": "Actualizado por seguridad"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/credentials/1
+        name: Eliminar una credencial
+        meta:
+          id: req_6a53333d92354a6692b2ca5a74dd0dcf
+          created: 1759858003136
+          modified: 1759858147255
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307732
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/credentials/3
+        name: Obtener una credencial
+        meta:
+          id: req_cfe88215cc8c4d04aeb67d60561d09a9
+          created: 1759858003137
+          modified: 1760387224937
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307432
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: "Sim "
+    meta:
+      id: fld_2c8619c7020540b68d694fea2072809f
+      created: 1759864757940
+      modified: 1759864763803
+      sortKey: -1759784772839
+      description: ""
+    children:
+      - url: http://localhost:3000/sim-cards
+        name: Crear una tarjeta SIM
+        meta:
+          id: req_7c519ba5cbb348078af14bb14041fee0
+          created: 1759864757948
+          modified: 1759961146416
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307232
+        method: POST
+        body:
+          mimeType: application/json
+          text: |
+            {
+              "assetId": 4,
+              "carrier": "Movistar",
+              "phoneNumber": "3012345672",
+              "planType": "postpago",
+              "status": "activo",
+              "activationDate": "2025-10-01T14:00:00.000Z",
+              "notes": "SIM para equipo de pruebas"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/sim-cards
+        name: Obtener todas las tarjetas SIM
+        meta:
+          id: req_40b7a507813a4bd1ae4d62b1e859268b
+          created: 1759864757950
+          modified: 1759864872465
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307632
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/sim-cards/1
+        name: Actualizar una tarjeta SIM
+        meta:
+          id: req_aaa7efc04ffb4130a0bf6a6e09430b03
+          created: 1759864757952
+          modified: 1759864916752
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307282
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |
+            {
+              "status": "suspendido",
+              "notes": "Línea suspendida temporalmente"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/sim-cards/1
+        name: Eliminar una tarjeta SIM
+        meta:
+          id: req_7bc9ce8595a64e0984e01d6246385723
+          created: 1759864757953
+          modified: 1759864887827
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307732
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/sim-cards/
+        name: Obtener una tarjeta SIM
+        meta:
+          id: req_8a0ea808ebda4f7bb62f71441b728e5d
+          created: 1759864757953
+          modified: 1760388843177
+          isPrivate: false
+          description: ""
+          sortKey: -1759780307432
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: "Usuario Activos "
+    meta:
+      id: fld_be503f34d4454fe382a18f1e684d1d5c
+      created: 1760390726007
+      modified: 1760456072886
+      sortKey: -1760390726007
+      description: ""
+    children:
+      - url: http://localhost:3000/user
+        name: Informacion del Usuario
+        meta:
+          id: req_84b1b9ed464242caa70641356e25ccd7
+          created: 1760394486601
+          modified: 1760396363257
+          isPrivate: false
+          description: ""
+          sortKey: -1760394486601
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Reset
+    meta:
+      id: fld_2a39fc4962d445aaa4d0760aec921164
+      created: 1760456046044
+      modified: 1760456075412
+      sortKey: -1760456046044
+      description: ""
+    children:
+      - url: http://localhost:3000/auth/force-change-password
+        name: Forzar cambio de contraseña
+        meta:
+          id: req_a1f612b32cb545328b006bcaf5ed5f1c
+          created: 1760456065866
+          modified: 1760459721631
+          isPrivate: false
+          description: ""
+          sortKey: -1760456065867
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"newPassword":"supersegura123"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/auth/change-password
+        name: Cambio de contraseña
+        meta:
+          id: req_52cad8c0984545ef98980ff728cd3c62
+          created: 1760456095480
+          modified: 1760456376988
+          isPrivate: false
+          description: ""
+          sortKey: -1760456095480
+        method: POST
+        body:
+          mimeType: application/json
+          text: |
+            {
+              "currentPassword": "tuNuevaContraseñaSegura",
+              "newPassword": "supersegura123"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:3000/auth/reset-password/12
+        name: Restablece la contraseña del usuario
+        meta:
+          id: req_245992c1e9e24318b35b50e84f788cc6
+          created: 1760459153975
+          modified: 1760459275096
+          isPrivate: false
+          description: ""
+          sortKey: -1760459153975
+        method: PATCH
+        headers:
+          - name: User-Agent
+            value: insomnia/11.6.1
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_99d30891da4bdcebc63947a8fc17f076de878684
+    created: 1759777962020
+    modified: 1760460553723
+  cookies:
+    - key: jwt
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InNpYW5hc2NvIiwic3ViIjoxMiwicm9sZSI6IlVzdWFyaW8iLCJpYXQiOjE3NjA0NjA1NTMsImV4cCI6MTc2MDQ2MDg1M30.oycidQvVkEKyBRMST8TJW9_kKLb7gbVIRdtbb7zBH5Y
+      maxAge: 420
+      domain: localhost
+      path: /
+      httpOnly: true
+      hostOnly: true
+      creation: 2025-10-08T16:40:18.598Z
+      lastAccessed: 2025-10-14T16:49:13.723Z
+      sameSite: lax
+      id: dd341452-c408-4259-933e-0b5a7548de2a
+environments:
+  name: Base Environment
+  meta:
+    id: env_99d30891da4bdcebc63947a8fc17f076de878684
+    created: 1759777962016
+    modified: 1759777962016
+    isPrivate: false
