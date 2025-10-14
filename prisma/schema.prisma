@@ -110,6 +110,9 @@ model Person {
   currentToken String?
   lastActivityAt   DateTime?
 
+  mustChangePassword Boolean @default(false)
+
+
   department Department? @relation(fields: [departmentId], references: [id])
   role       Role?       @relation(fields: [roleId], references: [id])
   branch     Branch?     @relation(fields: [branchId], references: [id])
