@@ -1,13 +1,11 @@
 import {
   Injectable,
   NotFoundException,
-  BadRequestException,
-  InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCredentialDto } from './dto/create-credential.dto';
 import { UpdateCredentialDto } from './dto/update-credential.dto';
-import { Prisma } from '@prisma/client';
+import { handlePrismaError } from 'src/common/utils/prisma-error.util';
 
 @Injectable()
 export class CredentialsService {
@@ -17,7 +15,7 @@ export class CredentialsService {
     try {
       return await this.prisma.credential.create({ data });
     } catch (error) {
-      this.handlePrismaError(error);
+      handlePrismaError(error, 'Credencial');
     }
   }
 
@@ -37,7 +35,7 @@ export class CredentialsService {
     try {
       return await this.prisma.credential.update({ where: { id }, data });
     } catch (error) {
-      this.handlePrismaError(error, id);
+      handlePrismaError(error, 'Credencial', id);
     }
   }
 
@@ -45,22 +43,7 @@ export class CredentialsService {
     try {
       return await this.prisma.credential.delete({ where: { id } });
     } catch (error) {
-      this.handlePrismaError(error, id);
+      handlePrismaError(error, 'Credencial', id);
     }
-  }
-
-  private handlePrismaError(error: any, id?: number): never {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      switch (error.code) {
-        case 'P2025':
-          throw new NotFoundException(`Credencial con ID ${id} no encontrada`);
-        case 'P2002':
-          throw new BadRequestException('Ya existe una credencial con ese valor único');
-        default:
-          throw new BadRequestException('Error en la solicitud');
-      }
-    }
-
-    throw new InternalServerErrorException('Error interno del servidor');
   }
 }

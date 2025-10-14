@@ -22,7 +22,7 @@ import {
     ApiOkResponse,
     ApiNoContentResponse,
     ApiBadRequestResponse,
-    ApiNotFoundResponse,
+    ApiNotFoundResponse, 
 } from '@nestjs/swagger';
 
 import { AssetsService } from './assets.service';

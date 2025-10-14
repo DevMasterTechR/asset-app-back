@@ -1,13 +1,8 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAssignmentHistoryDto } from './dto/create-assignment-history.dto';
 import { UpdateAssignmentHistoryDto } from './dto/update-assignment-history.dto';
-import { Prisma } from '@prisma/client';
+import { handlePrismaError } from 'src/common/utils/prisma-error.util';
 
 @Injectable()
 export class AssignmentHistoryService {
@@ -17,11 +12,11 @@ export class AssignmentHistoryService {
     try {
       return await this.prisma.assignmentHistory.create({ data });
     } catch (error) {
-      this.handlePrismaError(error);
+      handlePrismaError(error, 'Historial');
     }
   }
 
-  async findAll() {
+  findAll() {
     return this.prisma.assignmentHistory.findMany();
   }
 
@@ -37,7 +32,7 @@ export class AssignmentHistoryService {
     try {
       return await this.prisma.assignmentHistory.update({ where: { id }, data });
     } catch (error) {
-      this.handlePrismaError(error, id);
+      handlePrismaError(error, 'Historial', id);
     }
   }
 
@@ -45,22 +40,7 @@ export class AssignmentHistoryService {
     try {
       return await this.prisma.assignmentHistory.delete({ where: { id } });
     } catch (error) {
-      this.handlePrismaError(error, id);
+      handlePrismaError(error, 'Historial', id);
     }
-  }
-
-  private handlePrismaError(error: any, id?: number): never {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      switch (error.code) {
-        case 'P2025':
-          throw new NotFoundException(`Historial con ID ${id} no encontrado`);
-        case 'P2002':
-          throw new BadRequestException('Ya existe un historial con ese valor único');
-        default:
-          throw new BadRequestException('Error en la solicitud');
-      }
-    }
-
-    throw new InternalServerErrorException('Error interno del servidor');
   }
 }

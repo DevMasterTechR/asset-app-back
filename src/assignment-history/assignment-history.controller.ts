@@ -31,29 +31,45 @@ import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 @AdminOnly()
 @Controller('assignment-history')
 export class AssignmentHistoryController {
-    constructor(private readonly service: AssignmentHistoryService) { }
+    constructor(private readonly service: AssignmentHistoryService) {}
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ summary: 'Crear un nuevo historial de asignación' })
     @ApiBody({ type: CreateAssignmentHistoryDto })
-    @ApiCreatedResponse({ description: 'Historial creado exitosamente', type: CreateAssignmentHistoryDto })
-    @ApiBadRequestResponse({ description: 'Datos inválidos para crear historial' })
+    @ApiCreatedResponse({
+        description: 'Historial creado exitosamente',
+        type: CreateAssignmentHistoryDto,
+    })
+    @ApiBadRequestResponse({
+        description: 'Datos inválidos para crear historial',
+    })
     create(@Body() dto: CreateAssignmentHistoryDto) {
         return this.service.create(dto);
     }
 
     @Get()
     @ApiOperation({ summary: 'Obtener todos los historiales de asignación' })
-    @ApiOkResponse({ description: 'Lista de historiales obtenida', type: [CreateAssignmentHistoryDto] })
+    @ApiOkResponse({
+        description: 'Lista de historiales obtenida',
+        type: [CreateAssignmentHistoryDto],
+    })
     findAll() {
         return this.service.findAll();
     }
 
     @Get(':id')
     @ApiOperation({ summary: 'Obtener un historial por ID' })
-    @ApiParam({ name: 'id', type: 'number', description: 'ID del historial', example: 1 })
-    @ApiOkResponse({ description: 'Historial encontrado', type: CreateAssignmentHistoryDto })
+    @ApiParam({
+        name: 'id',
+        type: 'number',
+        description: 'ID del historial',
+        example: 1,
+    })
+    @ApiOkResponse({
+        description: 'Historial encontrado',
+        type: CreateAssignmentHistoryDto,
+    })
     @ApiNotFoundResponse({ description: 'Historial no encontrado' })
     @ApiBadRequestResponse({ description: 'ID inválido' })
     findOne(@Param('id', ParseIntPipe) id: number) {
@@ -62,19 +78,35 @@ export class AssignmentHistoryController {
 
     @Put(':id')
     @ApiOperation({ summary: 'Actualizar un historial de asignación' })
-    @ApiParam({ name: 'id', type: 'number', description: 'ID del historial a actualizar', example: 1 })
+    @ApiParam({
+        name: 'id',
+        type: 'number',
+        description: 'ID del historial a actualizar',
+        example: 1,
+    })
     @ApiBody({ type: UpdateAssignmentHistoryDto })
-    @ApiOkResponse({ description: 'Historial actualizado', type: UpdateAssignmentHistoryDto })
+    @ApiOkResponse({
+        description: 'Historial actualizado',
+        type: UpdateAssignmentHistoryDto,
+    })
     @ApiNotFoundResponse({ description: 'Historial no encontrado' })
     @ApiBadRequestResponse({ description: 'Datos inválidos para actualizar' })
-    update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAssignmentHistoryDto) {
+    update(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: UpdateAssignmentHistoryDto,
+    ) {
         return this.service.update(id, dto);
     }
 
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ summary: 'Eliminar un historial de asignación' })
-    @ApiParam({ name: 'id', type: 'number', description: 'ID del historial a eliminar', example: 1 })
+    @ApiParam({
+        name: 'id',
+        type: 'number',
+        description: 'ID del historial a eliminar',
+        example: 1,
+    })
     @ApiNoContentResponse({ description: 'Historial eliminado exitosamente' })
     @ApiNotFoundResponse({ description: 'Historial no encontrado' })
     @ApiBadRequestResponse({ description: 'ID inválido' })
