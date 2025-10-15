@@ -19,23 +19,25 @@ import { AssignmentHistoryModule } from './assignment-history/assignment-history
 import { CredentialsModule } from './credentials/credentials.module';
 import { SimCardsModule } from './sim-cards/sim-cards.module';
 
-
-
-
-
 @Module({
-  imports: [PrismaModule,
-            BranchesModule,
-            RolesModule, 
-            DepartmentsModule, 
-            StorageModule, 
-            AssetsModule, 
-            PeopleModule, 
-            AuthModule, 
-            InkModule, 
-            UtpCableModule, 
-            Rj45ConnectorModule, PowerStripModule, AssignmentHistoryModule, CredentialsModule, SimCardsModule],
-  controllers: [AppController],
-  providers: [AppService],
+    imports: [
+        PrismaModule,
+        BranchesModule,
+        RolesModule,
+        DepartmentsModule,
+        StorageModule,
+        AssetsModule,
+        PeopleModule,
+        AuthModule,
+        InkModule,
+        UtpCableModule,
+        Rj45ConnectorModule,
+        PowerStripModule,
+        AssignmentHistoryModule,
+        CredentialsModule,
+        SimCardsModule,
+    ],
+    controllers: [AppController],
+    providers: [AppService],
 })
 export class AppModule {}
