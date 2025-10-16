@@ -7,6 +7,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     constructor() {
   super();
   console.log('🟢 Nueva instancia de PrismaService creada');
+  console.trace(); 
 }
   async onModuleInit() {
     try {
