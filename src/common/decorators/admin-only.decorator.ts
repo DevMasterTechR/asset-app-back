@@ -6,7 +6,7 @@ import { SessionGuard } from 'src/auth/guards/session.guard';
 
 export function AdminOnly() {
   return applyDecorators(
-    UseGuards(JwtAuthGuard, SessionGuard, RolesGuard),
+    UseGuards(JwtAuthGuard, RolesGuard),
     Roles('Administrador'),
   );
 }

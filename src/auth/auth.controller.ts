@@ -27,6 +27,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { AuthService } from './auth.service';
 import { ForceChangePasswordDto } from './dto/force-change-password.dto';
 import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
+import {Authenticated} from 'src/common/decorators/authenticated.decorator';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -54,12 +55,10 @@ export class AuthController {
     }
 
     @Get('me')
-    @UseGuards(JwtAuthGuard, SessionGuard)
-    @ApiOperation({ summary: 'Obtener datos del usuario autenticado' })
-    @ApiOkResponse({ description: 'Datos del usuario actual' })
-    async me(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-        return this.authHandler.handleMe(req, res);
-    }
+    @Authenticated()
+  async me(@Req() req: Request) {
+    return req.user; // <- ya tienes el usuario validado por JWT
+  }
 
     @UseGuards(JwtAuthGuard, SessionGuard)
     @Post('change-password')
