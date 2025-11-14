@@ -12,7 +12,12 @@ async function bootstrap() {
 
   // 🔒 Middleware y config
   app.enableCors({
-    origin: 'http://localhost:8080',
+      origin: [
+    'http://192.168.50.95:8080',
+    'http://localhost:8080',
+    'http://localhost:3000',   
+    'http://localhost:5173'    
+  ],
     credentials: true,
   });
   app.use(cookieParser());

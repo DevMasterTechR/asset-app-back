@@ -1,1 +1,2 @@
-SELECT * FROM public."Person";
+SELECT * FROM public."Person"
+

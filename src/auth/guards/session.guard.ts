@@ -16,7 +16,11 @@ export class SessionGuard implements CanActivate {
 
     // ✅ Typecast para evitar error TS2339
     const user = request.user as { sub: number; username?: string };
-    const token = request.cookies?.jwt;
+    // Aceptar token desde cookie o desde Authorization: Bearer <token>
+    const cookieToken = request.cookies?.jwt;
+    const authHeader = request.headers?.authorization as string | undefined;
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : undefined;
+    const token = cookieToken || bearerToken;
 
     if (!user?.sub || !token) {
       throw new UnauthorizedException('Usuario no autenticado');

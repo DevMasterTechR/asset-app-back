@@ -15,10 +15,14 @@ export class AuthHandlerService {
 
     async handleLogin(loginDto: LoginDto, res: Response) {
         const user = await this.authService.validateUser(loginDto.username, loginDto.password);
-        const token = await this.authService.login(user);
+            const token = await this.authService.login(user);
 
-        setAuthCookie(res, token.access_token);
-        return { message: 'Login exitoso' };
+            // Setear cookie httpOnly para compatibilidad con clientes que la usen
+            setAuthCookie(res, token.access_token);
+
+            // Devolver también el token y el usuario en el body para que el frontend
+            // pueda usar Authorization: Bearer cuando la cookie no esté disponible
+            return token;
     }
 
     async handleLogout(req: Request, res: Response) {
