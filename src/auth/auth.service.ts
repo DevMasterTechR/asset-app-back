@@ -47,6 +47,7 @@ export class AuthService {
     return this.prisma.person.update({ where: { id: userId }, data: { currentToken: null, lastActivityAt: null } });
   }
 
+
 async changePassword(userId: number, dto: ChangePasswordDto) {
   const user = await this.findUserOrThrow(userId);
 

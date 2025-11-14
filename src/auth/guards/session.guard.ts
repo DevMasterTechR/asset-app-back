@@ -33,13 +33,18 @@ export class SessionGuard implements CanActivate {
     if (!person || person.currentToken !== token) {
       throw new UnauthorizedException('Sesión no válida');
     }
-
+    // Comprobar inactividad y expirar sesión si corresponde
     const lastActivity = person.lastActivityAt ?? new Date(0);
     const now = new Date();
     const diffMs = now.getTime() - lastActivity.getTime();
-    const maxInactivityMs = 5 * 60 * 1000; // 5 minutos
+
+    // Tiempo máximo de inactividad configurable vía env var
+    // Lee SESSION_TIMEOUT_MINUTES (minutos). Si no existe, usa 15 minutos.
+    const configuredMinutes = Number(process.env.SESSION_TIMEOUT_MINUTES ?? '') || 15;
+    const maxInactivityMs = configuredMinutes * 60 * 1000;
 
     if (diffMs > maxInactivityMs) {
+      // Invalidar token en BD
       await this.prisma.person.update({
         where: { id: person.id },
         data: {
@@ -51,7 +56,7 @@ export class SessionGuard implements CanActivate {
       throw new UnauthorizedException('Sesión expirada por inactividad');
     }
 
-    // Actualizar timestamp
+    // Actualizar timestamp de última actividad
     await this.prisma.person.update({
       where: { id: person.id },
       data: { lastActivityAt: now },

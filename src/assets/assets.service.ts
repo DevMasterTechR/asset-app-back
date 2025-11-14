@@ -11,8 +11,29 @@ export class AssetsService {
 
   async create(data: CreateAssetDto) {
     try {
-      return await this.prisma.asset.create({ data });
+      // Log entrada para depuración
+      if (process.env.DEBUG_ASSETS_SERVICE === 'true') {
+        console.log('[AssetsService.create] payload:', JSON.stringify(data));
+      }
+
+      // Normalizar posibles campos de fecha que vienen como strings desde el frontend
+      const payload: any = { ...data };
+      const dateFields = ['purchaseDate', 'deliveryDate', 'receivedDate'];
+      for (const f of dateFields) {
+        if (payload[f]) {
+          const d = new Date(payload[f]);
+          // Si la fecha no es válida, dejamos que Prisma/handler lance el error,
+          // pero convertimos cadenas válidas a objetos Date para que Prisma acepte el valor.
+          if (!isNaN(d.getTime())) payload[f] = d;
+        }
+      }
+
+      return await this.prisma.asset.create({ data: payload });
     } catch (error) {
+      // Always log the error (helps debugging when DEBUG flag isn't set)
+      console.error('[AssetsService.create] caught error:', error && error.stack ? error.stack : error);
+
+      // Delegate to the Prisma error handler which will throw an HTTP exception
       handlePrismaError(error, 'Activo');
     }
   }

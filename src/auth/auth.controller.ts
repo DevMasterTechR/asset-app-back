@@ -71,6 +71,8 @@ export class AuthController {
     return this.authService.changePassword(user.sub, dto);
     }
 
+        
+
     @UseGuards(JwtAuthGuard, SessionGuard)
     @Post('force-change-password')
     @ApiOperation({ summary: 'Cambio de contraseña tras login con contraseña temporal' })
@@ -82,10 +84,11 @@ export class AuthController {
     return this.authService.forceChangePassword(user.sub, dto.newPassword);
     }
 
-    @AdminOnly()
-    @Patch('reset-password/:userId')
-    @ApiOperation({ summary: 'Restablece la contraseña del usuario al nombre de usuario' })
-    async resetPassword(@Param('userId') userId: number) {
-    return this.authService.resetPasswordToUsername(userId);
-    }
+        @UseGuards(JwtAuthGuard, SessionGuard)
+        @Get('keepalive')
+        @ApiOperation({ summary: 'Keepalive: refresca la última actividad de la sesión' })
+        async keepAlive(@Req() req: Request) {
+            // El propio SessionGuard actualiza lastActivityAt; aquí devolvemos OK
+            return { ok: true };
+        }
 }
