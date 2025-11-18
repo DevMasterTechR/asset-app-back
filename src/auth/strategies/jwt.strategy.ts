@@ -21,6 +21,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
+    // Log temporal para depuración: revisar payload del token y evitar 401 por token mal formado
+    try {
+      console.log('[JwtStrategy] token payload:', JSON.stringify(payload));
+    } catch (e) {
+      console.log('[JwtStrategy] token payload: <unserializable>');
+    }
+
     // Este objeto será inyectado como req.user
     return {
       id: payload.sub,

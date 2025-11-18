@@ -84,11 +84,13 @@ export class AuthController {
     return this.authService.forceChangePassword(user.sub, dto.newPassword);
     }
 
-        @UseGuards(JwtAuthGuard, SessionGuard)
+        @Authenticated()
         @Get('keepalive')
-        @ApiOperation({ summary: 'Keepalive: refresca la última actividad de la sesión' })
+        @ApiOperation({ summary: 'Keepalive: comprueba que el token JWT es válido' })
         async keepAlive(@Req() req: Request) {
-            // El propio SessionGuard actualiza lastActivityAt; aquí devolvemos OK
+            // Usamos sólo JwtAuthGuard aquí para permitir al frontend comprobar
+            // que el token sigue siendo válido. El SessionGuard valida sesiones
+            // basadas en token/DB y puede provocar 401 si la cookie no se envía.
             return { ok: true };
         }
 }

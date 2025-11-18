@@ -50,8 +50,25 @@ export class AssetsService {
 
   async update(id: number, data: UpdateAssetDto) {
     try {
-      return await this.prisma.asset.update({ where: { id }, data });
+      // Log entrada para depuración
+      if (process.env.DEBUG_ASSETS_SERVICE === 'true') {
+        console.log('[AssetsService.update] id, payload:', id, JSON.stringify(data));
+      }
+
+      // Normalizar posibles campos de fecha que vienen como strings desde el frontend
+      const payload: any = { ...data };
+      const dateFields = ['purchaseDate', 'deliveryDate', 'receivedDate'];
+      for (const f of dateFields) {
+        if (payload[f]) {
+          const d = new Date(payload[f]);
+          if (!isNaN(d.getTime())) payload[f] = d;
+        }
+      }
+
+      return await this.prisma.asset.update({ where: { id }, data: payload });
     } catch (error) {
+      // Log the error to help debugging
+      console.error('[AssetsService.update] caught error:', error && error.stack ? error.stack : error);
       handlePrismaError(error, 'Activo', id);
     }
   }

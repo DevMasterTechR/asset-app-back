@@ -21,7 +21,18 @@ async function bootstrap() {
     credentials: true,
   });
   app.use(cookieParser());
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  // Temporal: loguear el body crudo para depuración de clientes (antes de ValidationPipe)
+  // Útil para ver exactamente qué envía el frontend cuando recibimos 400 de validación.
+  app.use((req, _res, next) => {
+    try {
+      console.log('[HTTP]', req.method, req.url, 'body:', JSON.stringify(req.body));
+    } catch (e) {
+      console.log('[HTTP]', req.method, req.url, 'body: <unserializable>');
+    }
+    next();
+  });
+  // Enable transform so DTO numeric/string types are converted (e.g. "1" -> 1)
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   // 📄 Swagger
   const config = new DocumentBuilder()

@@ -60,11 +60,30 @@ export class PeopleService {
   // Actualizar persona
   async update(id: number, data: UpdatePersonDto) {
     try {
+      const payload: any = { ...data };
+
+      // Si se envía password en el update, hashearla antes de guardar
+      if (payload.password) {
+        const salt = await bcrypt.genSalt(10);
+        payload.password = await bcrypt.hash(payload.password, salt);
+      }
+
+      // Coerce numeric IDs if they were sent as strings
+      const numericFields = ['departmentId', 'roleId', 'branchId'];
+      for (const f of numericFields) {
+        if (payload[f] !== undefined && payload[f] !== null && typeof payload[f] === 'string') {
+          const n = Number(payload[f]);
+          if (!isNaN(n)) payload[f] = n;
+        }
+      }
+
       return await this.prisma.person.update({
         where: { id },
-        data,
+        data: payload,
       });
     } catch (error) {
+      // Loguear el error completo para ayudar a depuración
+      console.error('[PeopleService.update] caught error:', error && error.stack ? error.stack : error);
       this.handlePrismaError(error, id);
     }
   }

@@ -13,7 +13,8 @@ import { AuthHandlerService } from './services/auth-handler.service';
     PassportModule,
     JwtModule.register({
       secret: jwtConstants.secret,
-      signOptions: { expiresIn: '5m' },
+      // Aumentamos temporalmente el tiempo de expiración a 1 hora para evitar expiraciones rápidas durante pruebas
+      signOptions: { expiresIn: '1h' },
     }),
   ],
   controllers: [AuthController],
