@@ -20,9 +20,9 @@ export class AuthHandlerService {
             // Setear cookie httpOnly para compatibilidad con clientes que la usen
             setAuthCookie(res, token.access_token);
 
-            // Devolver también el token y el usuario en el body para que el frontend
-            // pueda usar Authorization: Bearer cuando la cookie no esté disponible
-            return token;
+                // Devolver sólo el usuario y mensaje. No incluimos el access_token en el body
+                // para evitar que clientes lo guarden accidentalmente en localStorage.
+                return { message: 'Login exitoso', user: token.user };
     }
 
     async handleLogout(req: Request, res: Response) {

@@ -6,13 +6,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     constructor() {
   super();
-  console.log('🟢 Nueva instancia de PrismaService creada');
-  console.trace(); 
+    // PrismaService initialized silently.
 }
   async onModuleInit() {
     try {
       await this.$connect();
-      console.log('✅ Conectado a la base de datos correctamente.');
+      // Connected to DB (silent)
     } catch (error) {
       console.error('❌ Error al conectar con la base de datos:');
       console.error(error);
@@ -21,8 +20,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async onModuleDestroy() {
-    console.log('👋 Cerrando conexión a la base de datos...');
+    // Closing DB connection
     await this.$disconnect();
-    console.log('✅ Conexión cerrada.');
+    // DB connection closed
   }
 }

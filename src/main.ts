@@ -3,9 +3,28 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import express from 'express';
+import fs from 'fs';
+import path from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Soportar HTTPS en desarrollo/producción si se proporcionan certificados
+  let httpsOptions: any = undefined;
+  const keyPath = process.env.SSL_KEY_PATH;
+  const certPath = process.env.SSL_CERT_PATH;
+  if (keyPath && certPath) {
+    try {
+      httpsOptions = {
+        key: fs.readFileSync(path.resolve(keyPath)),
+        cert: fs.readFileSync(path.resolve(certPath)),
+      };
+      // Starting with HTTPS enabled (no verbose log)
+    } catch (e) {
+      console.warn('[main] Could not read SSL files, starting HTTP. Error:', e && e.message ? e.message : e);
+    }
+  }
+
+  const app = await NestFactory.create(AppModule, { httpsOptions });
 
   // ✅ Habilita shutdown hooks de NestJS
   app.enableShutdownHooks();
@@ -21,16 +40,9 @@ async function bootstrap() {
     credentials: true,
   });
   app.use(cookieParser());
-  // Temporal: loguear el body crudo para depuración de clientes (antes de ValidationPipe)
-  // Útil para ver exactamente qué envía el frontend cuando recibimos 400 de validación.
-  app.use((req, _res, next) => {
-    try {
-      console.log('[HTTP]', req.method, req.url, 'body:', JSON.stringify(req.body));
-    } catch (e) {
-      console.log('[HTTP]', req.method, req.url, 'body: <unserializable>');
-    }
-    next();
-  });
+  // Ensure JSON body is parsed before our debug logger so we can inspect parsed body
+  app.use(express.json());
+  // Note: request body debug logging removed to avoid noisy logs in production/dev.
   // Enable transform so DTO numeric/string types are converted (e.g. "1" -> 1)
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 

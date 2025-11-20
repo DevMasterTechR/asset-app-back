@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Request } from 'express';
+import { decryptToken } from '../utils/auth-cookie.helper';
 
 @Injectable()
 export class SessionGuard implements CanActivate {
@@ -20,7 +21,19 @@ export class SessionGuard implements CanActivate {
     const cookieToken = request.cookies?.jwt;
     const authHeader = request.headers?.authorization as string | undefined;
     const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : undefined;
-    const token = cookieToken || bearerToken;
+    // Si la cookie está cifrada, intentar descifrarla antes de usarla
+    let decryptedCookieToken: string | undefined = undefined;
+    if (cookieToken) {
+      try {
+        decryptedCookieToken = decryptToken(cookieToken);
+      } catch (_e) {
+        // Si no se puede descifrar, dejamos undefined y permitimos que el bearerToken lo cubra
+      }
+    }
+
+    const token = decryptedCookieToken || cookieToken || bearerToken;
+
+    // no debug logs
 
     if (!user?.sub || !token) {
       throw new UnauthorizedException('Usuario no autenticado');

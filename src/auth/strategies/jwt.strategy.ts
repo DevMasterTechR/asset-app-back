@@ -3,17 +3,27 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { jwtConstants } from '../constants';
 import { Request } from 'express';
+import { decryptToken } from '../utils/auth-cookie.helper';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        // ✅ Permite leer el token desde:
         // 1. Authorization: Bearer <token>
         ExtractJwt.fromAuthHeaderAsBearerToken(),
-        // 2. Cookie jwt (como en tu login actual)
-        (req: Request) => req?.cookies?.jwt || null,
+        // 2. Cookie jwt — si está cifrada, la desciframos antes de devolver el JWT raw
+        (req: Request) => {
+          const raw = req?.cookies?.jwt || null;
+          if (!raw) return null;
+          try {
+            const decrypted = decryptToken(raw);
+            return decrypted;
+          } catch (_e) {
+            // Si no se puede descifrar, devolver null para que otro extractor intente
+            return null;
+          }
+        },
       ]),
       ignoreExpiration: false, // ❌ No ignores expiración
       secretOrKey: jwtConstants.secret,
@@ -21,16 +31,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    // Log temporal para depuración: revisar payload del token y evitar 401 por token mal formado
-    try {
-      console.log('[JwtStrategy] token payload:', JSON.stringify(payload));
-    } catch (e) {
-      console.log('[JwtStrategy] token payload: <unserializable>');
-    }
+    // validate returns the user object that will be attached to req.user
 
     // Este objeto será inyectado como req.user
     return {
-      id: payload.sub,
+      sub: payload.sub,
       username: payload.username,
       role: payload.role,
     };

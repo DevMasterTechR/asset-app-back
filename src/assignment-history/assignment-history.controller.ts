@@ -25,10 +25,11 @@ import {
     ApiBadRequestResponse,
     ApiNotFoundResponse,
 } from '@nestjs/swagger';
-import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { SessionGuard } from 'src/auth/guards/session.guard';
 
 @ApiTags('Assignment History')
-@AdminOnly()
+@UseGuards(JwtAuthGuard, SessionGuard)
 @Controller('assignment-history')
 export class AssignmentHistoryController {
     constructor(private readonly service: AssignmentHistoryService) {}
