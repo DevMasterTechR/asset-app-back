@@ -29,6 +29,7 @@ import { AssetsService } from './assets.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
 import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
+import { Authenticated } from 'src/common/decorators/authenticated.decorator';
 
 @ApiTags('Assets')
 @AdminOnly()
@@ -52,6 +53,14 @@ export class AssetsController {
     @ApiOperation({ summary: 'Obtener todos los activos' })
     @ApiOkResponse({ description: 'Lista de activos', type: [CreateAssetDto] })
     findAll() {
+        return this.assetsService.findAll();
+    }
+
+    @Get('public')
+    @Authenticated()
+    @ApiOperation({ summary: 'Obtener todos los activos (vista pública para usuarios autenticados)' })
+    @ApiOkResponse({ description: 'Lista pública de activos', type: [CreateAssetDto] })
+    findAllPublic() {
         return this.assetsService.findAll();
     }
 

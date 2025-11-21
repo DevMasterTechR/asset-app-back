@@ -31,9 +31,12 @@ export class SessionGuard implements CanActivate {
       }
     }
 
-    const token = decryptedCookieToken || cookieToken || bearerToken;
+    // Preferimos el token descifrado desde la cookie, y si no está disponible
+    // usamos el bearer token. No debemos usar el valor crudo de la cookie
+    // (que está cifrada) porque no coincide con el token almacenado en BD.
+    const token = decryptedCookieToken ?? bearerToken;
 
-    // no debug logs
+    // No debug logs here
 
     if (!user?.sub || !token) {
       throw new UnauthorizedException('Usuario no autenticado');
@@ -44,6 +47,14 @@ export class SessionGuard implements CanActivate {
     });
 
     if (!person || person.currentToken !== token) {
+      // Log temporal para diagnóstico: token de petición no coincide con token en BDD
+      // Se imprimen solo muestras (no el token completo) para reducir exposición.
+      // eslint-disable-next-line no-console
+      console.warn('[SessionGuard] token mismatch', {
+        personId: person?.id ?? null,
+        currentTokenSample: person?.currentToken ? `${String(person.currentToken).slice(0,8)}...len=${String(person.currentToken).length}` : null,
+        tokenSample: token ? `${String(token).slice(0,8)}...len=${String(token).length}` : null,
+      });
       throw new UnauthorizedException('Sesión no válida');
     }
     // Comprobar inactividad y expirar sesión si corresponde
@@ -74,6 +85,8 @@ export class SessionGuard implements CanActivate {
       where: { id: person.id },
       data: { lastActivityAt: now },
     });
+
+    // Última actividad actualizada (no hay logs en producción)
 
     return true;
   }

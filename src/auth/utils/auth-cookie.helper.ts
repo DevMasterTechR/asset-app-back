@@ -1,7 +1,9 @@
 import { Response } from 'express';
 import crypto from 'crypto';
 
-const DEFAULT_MAX_AGE = 7 * 60 * 1000; // 7 minutos
+// Por defecto usamos el timeout de sesión (SESSION_TIMEOUT_MINUTES) para
+// asegurar que la cookie dure al menos tanto como la sesión en servidor.
+const DEFAULT_MAX_AGE = (Number(process.env.SESSION_TIMEOUT_MINUTES ?? '') || 15) * 60 * 1000;
 
 function getKey(): Buffer {
     const raw = process.env.COOKIE_ENCRYPTION_KEY ?? '';
@@ -44,16 +46,20 @@ export const setAuthCookie = (res: Response, token: string) => {
     // Determinar si hay HTTPS disponible (certificados configurados)
     const hasHttps = !!(process.env.SSL_KEY_PATH && process.env.SSL_CERT_PATH);
 
-    // En entornos con HTTPS (producción o dev con certs) usamos SameSite=None + Secure=true
-    // En desarrollo sin HTTPS forzamos Secure=false y SameSite=lax para que la cookie se guarde
+    // Use SameSite=None only when Secure is enabled (HTTPS). Modern browsers
+    // will reject cookies with SameSite=None unless Secure=true. For local
+    // development without HTTPS, fall back to 'lax' to ensure the cookie is
+    // accepted and sent by the browser (different ports on localhost are
+    // considered same-site by registrable domain rules).
     const secureFlag = hasHttps;
-    const sameSiteVal: any = hasHttps ? 'none' : 'lax';
+    const sameSiteVal: any = secureFlag ? 'none' : 'lax';
 
+    const configuredMax = Number(process.env.AUTH_COOKIE_MAX_AGE ?? DEFAULT_MAX_AGE);
     res.cookie('jwt', value, {
         httpOnly: true,
         secure: secureFlag,
         sameSite: sameSiteVal,
-        maxAge: Number(process.env.AUTH_COOKIE_MAX_AGE ?? DEFAULT_MAX_AGE),
+        maxAge: configuredMax,
     });
 };
 

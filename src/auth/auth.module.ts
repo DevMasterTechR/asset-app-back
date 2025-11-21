@@ -18,7 +18,7 @@ import { AuthHandlerService } from './services/auth-handler.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, PrismaService,AuthHandlerService],
+  providers: [AuthService, JwtStrategy, PrismaService, AuthHandlerService],
 })
 export class AuthModule {}
 

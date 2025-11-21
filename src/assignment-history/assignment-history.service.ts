@@ -20,19 +20,28 @@ export class AssignmentHistoryService {
       }
 
       // Crear historial y actualizar estado del activo en una transacción
+      // Incluir relaciones en el assignment creado para que el frontend tenga
+      // directamente la información del activo, persona y sucursal.
       const result = await this.prisma.$transaction([
-        this.prisma.assignmentHistory.create({ data }),
+        this.prisma.assignmentHistory.create({
+          data,
+          include: { asset: true, person: true, branch: true },
+        }),
         this.prisma.asset.update({
           where: { id: data.assetId },
           data: {
             status: 'assigned',
             assignedPersonId: data.personId,
             branchId: data.branchId ?? asset.branchId,
+            // Establecer la fecha de entrega en el asset cuando se crea la asignación
+            deliveryDate: data.assignmentDate ? new Date(data.assignmentDate) : new Date(),
+            // Al asignar, la fecha de recepción debe limpiarse (no recibido aún)
+            receivedDate: null,
           },
         }),
       ]);
 
-      // Devolver tanto el assignmentHistory creado como el asset actualizado
+      // Devolver tanto el assignmentHistory creado (con relaciones) como el asset actualizado
       return { assignment: result[0], asset: result[1] };
     } catch (error) {
       handlePrismaError(error, 'Historial');
@@ -40,11 +49,17 @@ export class AssignmentHistoryService {
   }
 
   findAll() {
-    return this.prisma.assignmentHistory.findMany();
+    return this.prisma.assignmentHistory.findMany({
+      include: { asset: true, person: true, branch: true },
+      orderBy: { assignmentDate: 'desc' },
+    });
   }
 
   async findOne(id: number) {
-    const record = await this.prisma.assignmentHistory.findUnique({ where: { id } });
+    const record = await this.prisma.assignmentHistory.findUnique({
+      where: { id },
+      include: { asset: true, person: true, branch: true },
+    });
     if (!record) {
       throw new NotFoundException(`Historial con ID ${id} no encontrado`);
     }
@@ -61,6 +76,12 @@ export class AssignmentHistoryService {
         const existing = await this.prisma.assignmentHistory.findUnique({ where: { id } });
         if (!existing) throw new NotFoundException(`Historial con ID ${id} no encontrado`);
 
+        // Si se registra una devolución, además de marcar el activo como
+        // disponible debemos guardar la fecha de recepción (`receivedDate`) en
+        // la tabla de assets. Usamos la `returnDate` proporcionada por el
+        // cliente si existe, o la fecha actual como fallback.
+        const receivedDate = data.returnDate ? new Date(data.returnDate) : new Date();
+
         const txResult = await this.prisma.$transaction([
           this.prisma.assignmentHistory.update({ where: { id }, data }),
           this.prisma.asset.update({
@@ -68,6 +89,7 @@ export class AssignmentHistoryService {
             data: {
               status: 'available',
               assignedPersonId: null,
+              receivedDate,
             },
           }),
         ]);

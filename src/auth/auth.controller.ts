@@ -23,6 +23,8 @@ import {
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { SessionGuard } from './guards/session.guard';
 import { AuthHandlerService } from './services/auth-handler.service';
+import { setAuthCookie } from './utils/auth-cookie.helper';
+import { PrismaService } from '../prisma/prisma.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { AuthService } from './auth.service';
 import { ForceChangePasswordDto } from './dto/force-change-password.dto';
@@ -32,7 +34,7 @@ import {Authenticated} from 'src/common/decorators/authenticated.decorator';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authHandler: AuthHandlerService,private readonly authService: AuthService,) {}
+    constructor(private readonly authHandler: AuthHandlerService,private readonly authService: AuthService, private readonly prisma: PrismaService) {}
     
 
     @Post('login')
@@ -84,13 +86,34 @@ export class AuthController {
     return this.authService.forceChangePassword(user.sub, dto.newPassword);
     }
 
-        @Authenticated()
+        @UseGuards(JwtAuthGuard, SessionGuard)
         @Get('keepalive')
-        @ApiOperation({ summary: 'Keepalive: comprueba que el token JWT es válido' })
+        @ApiOperation({ summary: 'Keepalive: actualiza última actividad en servidor (no regenera token)' })
         async keepAlive(@Req() req: Request) {
-            // Usamos sólo JwtAuthGuard aquí para permitir al frontend comprobar
-            // que el token sigue siendo válido. El SessionGuard valida sesiones
-            // basadas en token/DB y puede provocar 401 si la cookie no se envía.
+            // SessionGuard valida el JWT y actualiza `lastActivityAt` en BD.
+            // No regeneramos ni sobreescribimos `person.currentToken` para evitar
+            // invalidar tokens en otras pestañas.
             return { ok: true };
+        }
+
+        @Authenticated()
+        @Get('session')
+        @ApiOperation({ summary: 'Estado de sesión: tiempo restante antes de expirar' })
+        async session(@Req() req: Request) {
+            const user = req.user as { sub: number };
+            const person = await this.prisma.person.findUnique({ where: { id: user.sub } });
+            const configuredMinutes = Number(process.env.SESSION_TIMEOUT_MINUTES ?? '') || 15;
+            let remainingSeconds: number | null = null;
+            if (person?.lastActivityAt) {
+                const last = new Date(person.lastActivityAt).getTime();
+                const now = Date.now();
+                const maxMs = configuredMinutes * 60 * 1000;
+                const elapsed = now - last;
+                remainingSeconds = Math.max(0, Math.floor((maxMs - elapsed) / 1000));
+            } else {
+                remainingSeconds = configuredMinutes * 60;
+            }
+
+            return { remainingSeconds, lastActivityAt: person?.lastActivityAt, timeoutMinutes: configuredMinutes };
         }
 }

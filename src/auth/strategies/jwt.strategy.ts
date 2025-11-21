@@ -17,11 +17,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           const raw = req?.cookies?.jwt || null;
           if (!raw) return null;
           try {
+            // Intentamos descifrar. Si falla, asumimos que la cookie contiene
+            // el JWT en claro y devolvemos el valor crudo.
             const decrypted = decryptToken(raw);
             return decrypted;
           } catch (_e) {
-            // Si no se puede descifrar, devolver null para que otro extractor intente
-            return null;
+            return raw;
           }
         },
       ]),
