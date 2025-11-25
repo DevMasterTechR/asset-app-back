@@ -39,6 +39,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       sub: payload.sub,
       username: payload.username,
       role: payload.role,
+      // Incluir `exp` y `iat` si están presentes para que controladores puedan
+      // calcular tiempo restante de sesión sin consultar la base de datos.
+      exp: payload.exp,
+      iat: payload.iat,
     };
   }
 }

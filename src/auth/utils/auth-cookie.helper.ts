@@ -1,9 +1,11 @@
 import { Response } from 'express';
 import crypto from 'crypto';
 
-// Por defecto usamos el timeout de sesión (SESSION_TIMEOUT_MINUTES) para
-// asegurar que la cookie dure al menos tanto como la sesión en servidor.
-const DEFAULT_MAX_AGE = (Number(process.env.SESSION_TIMEOUT_MINUTES ?? '') || 15) * 60 * 1000;
+// Determinar duración por defecto de la cookie:
+// - Si se configura `AUTH_COOKIE_MAX_AGE` se usa directamente (milisegundos).
+// - Si no, intentamos usar `AUTH_TOKEN_EXPIRES_IN` (ej: '7d', '365d') derivando días,
+//   pero por simplicidad en ausencia de cualquier configuración usamos 365 días.
+const DEFAULT_MAX_AGE = Number(process.env.AUTH_COOKIE_MAX_AGE ?? '') || (Number(process.env.AUTH_TOKEN_EXPIRES_DAYS ?? '365') * 24 * 60 * 60 * 1000);
 
 function getKey(): Buffer {
     const raw = process.env.COOKIE_ENCRYPTION_KEY ?? '';

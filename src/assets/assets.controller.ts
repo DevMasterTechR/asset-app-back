@@ -44,7 +44,17 @@ export class AssetsController {
     @ApiCreatedResponse({ description: 'Activo creado exitosamente', type: CreateAssetDto })
     @ApiBadRequestResponse({ description: 'Datos inválidos para crear un activo' })
     @ApiBody({ type: CreateAssetDto })
-    create(@Body() dto: CreateAssetDto) {
+    create(@Req() req: any, @Body() dto: CreateAssetDto) {
+        // Log temporal para diagnosticar por qué algunas peticiones llegan
+        // no autenticadas (401). Esto se quitará cuando confirmemos el
+        // comportamiento esperado.
+        try {
+            // No usar console.log pesado en producción; es temporal.
+            // eslint-disable-next-line no-console
+            console.log('[DEBUG] AssetsController.create req.user =', req.user);
+        } catch (e) {
+            // Ignorar cualquier error de logging
+        }
         return this.assetsService.create(dto);
     }
 

@@ -27,11 +27,7 @@ import { InkService } from './ink.service';
 import { CreateInkDto } from './dto/create-ink.dto';
 import { UpdateInkDto } from './dto/update-ink.dto';
 
-import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SessionGuard } from '../auth/guards/session.guard';
 import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
-import { RolesGuard } from 'src/common/guards/roles.guard';
 
 const ApiIdParam = () =>
     ApiParam({

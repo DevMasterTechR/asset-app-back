@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
@@ -24,10 +25,15 @@ async function bootstrap() {
     }
   }
 
-  const app = await NestFactory.create(AppModule, { httpsOptions });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { httpsOptions });
 
   // ✅ Habilita shutdown hooks de NestJS
   app.enableShutdownHooks();
+  
+  // Desactivar ETag a nivel de aplicación para evitar respuestas 304
+  // automáticas basadas en If-None-Match. Esto asegura que endpoints
+  // como /auth/session devuelvan contenido fresco en cada petición.
+  app.set('etag', false);
 
   // 🔒 Middleware y config
   app.enableCors({

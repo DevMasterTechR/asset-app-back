@@ -8,6 +8,7 @@ import {
     Req,
     UseGuards,
     Get,
+    Header,
     Patch,
     Param,
 } from '@nestjs/common';
@@ -21,7 +22,6 @@ import {
     ApiOkResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { SessionGuard } from './guards/session.guard';
 import { AuthHandlerService } from './services/auth-handler.service';
 import { setAuthCookie } from './utils/auth-cookie.helper';
 import { PrismaService } from '../prisma/prisma.service';
@@ -48,7 +48,7 @@ export class AuthController {
     }
 
     @Post('logout')
-    @UseGuards(JwtAuthGuard, SessionGuard)
+    @UseGuards(JwtAuthGuard)
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Cerrar sesión' })
     @ApiOkResponse({ description: 'Sesión cerrada exitosamente' })
@@ -62,7 +62,7 @@ export class AuthController {
     return req.user; // <- ya tienes el usuario validado por JWT
   }
 
-    @UseGuards(JwtAuthGuard, SessionGuard)
+    @UseGuards(JwtAuthGuard)
     @Post('change-password')
     @ApiOperation({ summary: 'Cambiar contraseña estando logueado' })
     async changePassword(
@@ -75,7 +75,7 @@ export class AuthController {
 
         
 
-    @UseGuards(JwtAuthGuard, SessionGuard)
+    @UseGuards(JwtAuthGuard)
     @Post('force-change-password')
     @ApiOperation({ summary: 'Cambio de contraseña tras login con contraseña temporal' })
     async forceChangePassword(
@@ -86,34 +86,59 @@ export class AuthController {
     return this.authService.forceChangePassword(user.sub, dto.newPassword);
     }
 
-        @UseGuards(JwtAuthGuard, SessionGuard)
+        @UseGuards(JwtAuthGuard)
         @Get('keepalive')
-        @ApiOperation({ summary: 'Keepalive: actualiza última actividad en servidor (no regenera token)' })
+        @ApiOperation({ summary: 'Keepalive: actualiza lastActivityAt sin regenerar token' })
         async keepAlive(@Req() req: Request) {
-            // SessionGuard valida el JWT y actualiza `lastActivityAt` en BD.
-            // No regeneramos ni sobreescribimos `person.currentToken` para evitar
-            // invalidar tokens en otras pestañas.
-            return { ok: true };
+            // Update lastActivityAt for the person so active users are kept alive
+            // without regenerating JWTs (avoids token mismatch across tabs).
+            const user = req.user as any;
+            if (!user?.sub) return { ok: false };
+            const configuredMinutes = Number(process.env.SESSION_TIMEOUT_MINUTES ?? '') || 15;
+            try {
+                await this.prisma.person.update({ where: { id: Number(user.sub) }, data: { lastActivityAt: new Date() } });
+            } catch (e) {
+                // ignore DB errors here but return ok:false to caller
+                return { ok: false };
+            }
+            return { ok: true, timeoutMinutes: configuredMinutes };
         }
 
-        @Authenticated()
         @Get('session')
+        @Authenticated()
+        @Header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        @Header('Pragma', 'no-cache')
         @ApiOperation({ summary: 'Estado de sesión: tiempo restante antes de expirar' })
         async session(@Req() req: Request) {
-            const user = req.user as { sub: number };
-            const person = await this.prisma.person.findUnique({ where: { id: user.sub } });
-            const configuredMinutes = Number(process.env.SESSION_TIMEOUT_MINUTES ?? '') || 15;
-            let remainingSeconds: number | null = null;
-            if (person?.lastActivityAt) {
-                const last = new Date(person.lastActivityAt).getTime();
-                const now = Date.now();
-                const maxMs = configuredMinutes * 60 * 1000;
-                const elapsed = now - last;
-                remainingSeconds = Math.max(0, Math.floor((maxMs - elapsed) / 1000));
-            } else {
-                remainingSeconds = configuredMinutes * 60;
-            }
+            const user = req.user as any;
 
-            return { remainingSeconds, lastActivityAt: person?.lastActivityAt, timeoutMinutes: configuredMinutes };
+            // Prefer server-side lastActivityAt when available so that keepAlive
+            // calls (which update lastActivityAt) keep the session alive even if
+            // the JWT has an `exp` claim. This allows keeping users logged while
+            // they are active without regenerating tokens.
+            const configuredMinutes = Number(process.env.SESSION_TIMEOUT_MINUTES ?? '') || 15;
+            try {
+                const person = await this.prisma.person.findUnique({ where: { id: Number(user.sub) } });
+                let remainingSeconds: number | null = null;
+                if (person?.lastActivityAt) {
+                    const last = new Date(person.lastActivityAt).getTime();
+                    const now = Date.now();
+                    const maxMs = configuredMinutes * 60 * 1000;
+                    const elapsed = now - last;
+                    remainingSeconds = Math.max(0, Math.floor((maxMs - elapsed) / 1000));
+                } else {
+                    // If no lastActivityAt recorded, assume full timeout window
+                    remainingSeconds = configuredMinutes * 60;
+                }
+                return { remainingSeconds, lastActivityAt: person?.lastActivityAt, timeoutMinutes: configuredMinutes };
+            } catch (e) {
+                // Fallback to token-based expiry if DB lookup fails
+                if (user?.exp) {
+                    const nowSec = Math.floor(Date.now() / 1000);
+                    const remainingSeconds = Math.max(0, Number(user.exp) - nowSec);
+                    return { remainingSeconds, timeoutMinutes: null, tokenExp: user.exp };
+                }
+                return { remainingSeconds: configuredMinutes * 60, timeoutMinutes: configuredMinutes };
+            }
         }
 }

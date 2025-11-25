@@ -26,10 +26,9 @@ import {
     ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { SessionGuard } from 'src/auth/guards/session.guard';
 
 @ApiTags('Assignment History')
-@UseGuards(JwtAuthGuard, SessionGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('assignment-history')
 export class AssignmentHistoryController {
     constructor(private readonly service: AssignmentHistoryService) {}

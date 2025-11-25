@@ -36,15 +36,13 @@ export class AuthService {
 
   async login(user: any) {
     const access_token = this.jwt.sign({ username: user.username, sub: user.id, role: user.role?.name });
-    await this.prisma.person.update({
-      where: { id: user.id },
-      data: { currentToken: access_token, lastActivityAt: new Date() },
-    });
+    // Stateless mode: do not persist token or last activity in DB
     return { access_token, user: { id: user.id, username: user.username, role: user.role } };
   }
 
   logout(userId: number) {
-    return this.prisma.person.update({ where: { id: userId }, data: { currentToken: null, lastActivityAt: null } });
+    // Stateless: clearing DB session is not required. Keep API for compatibility.
+    return { message: 'Logged out' } as any;
   }
 
 
