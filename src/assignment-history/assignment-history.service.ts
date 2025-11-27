@@ -106,7 +106,29 @@ export class AssignmentHistoryService {
 
   async remove(id: number) {
     try {
-      return await this.prisma.assignmentHistory.delete({ where: { id } });
+      // Antes de eliminar el historial, obtener el registro para conocer el assetId
+      const existing = await this.prisma.assignmentHistory.findUnique({ where: { id } });
+      if (!existing) throw new NotFoundException(`Historial con ID ${id} no encontrado`);
+
+      // Eliminar el historial y actualizar el asset relacionado en una transacción
+      const tx = await this.prisma.$transaction([
+        this.prisma.assignmentHistory.delete({ where: { id } }),
+        this.prisma.asset.update({
+          where: { id: existing.assetId },
+          data: {
+            // Al eliminar la asignación, dejar el activo en estado disponible
+            status: 'available',
+            // Quitar la referencia a la persona asignada
+            assignedPersonId: null,
+            // Limpiar fechas relacionadas con la asignación
+            deliveryDate: null,
+            receivedDate: null,
+          },
+        }),
+      ]);
+
+      // Devolver el historial eliminado (tx[0]) y el asset actualizado (tx[1])
+      return { assignment: tx[0], asset: tx[1] };
     } catch (error) {
       handlePrismaError(error, 'Historial', id);
     }

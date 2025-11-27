@@ -99,7 +99,7 @@ export class AssignmentHistoryController {
     }
 
     @Delete(':id')
-    @HttpCode(HttpStatus.NO_CONTENT)
+    @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Eliminar un historial de asignación' })
     @ApiParam({
         name: 'id',
@@ -107,7 +107,7 @@ export class AssignmentHistoryController {
         description: 'ID del historial a eliminar',
         example: 1,
     })
-    @ApiNoContentResponse({ description: 'Historial eliminado exitosamente' })
+    @ApiOkResponse({ description: 'Historial eliminado exitosamente' })
     @ApiNotFoundResponse({ description: 'Historial no encontrado' })
     @ApiBadRequestResponse({ description: 'ID inválido' })
     remove(@Param('id', ParseIntPipe) id: number) {
