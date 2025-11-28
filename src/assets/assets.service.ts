@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
@@ -38,8 +38,37 @@ export class AssetsService {
     }
   }
 
-  findAll() {
-    return this.prisma.asset.findMany();
+  // Obtener activos con soporte de búsqueda y paginación
+  async findAll(q?: string, page = 1, limit = 10) {
+    const where: any = {};
+
+    if (q && q.trim().length > 0) {
+      const term = q.trim();
+      where.OR = [
+        { assetCode: { contains: term, mode: 'insensitive' } },
+        { brand: { contains: term, mode: 'insensitive' } },
+        { model: { contains: term, mode: 'insensitive' } },
+        { serialNumber: { contains: term, mode: 'insensitive' } },
+      ];
+    }
+
+    const take = Number(limit) > 0 ? Number(limit) : 10;
+    const skip = (Number(page) > 1 ? Number(page) - 1 : 0) * take;
+
+    const [data, total] = await Promise.all([
+      this.prisma.asset.findMany({ where, skip, take }),
+      this.prisma.asset.count({ where }),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / take));
+
+    return {
+      data,
+      total,
+      page: Number(page),
+      limit: take,
+      totalPages,
+    };
   }
 
   async findOne(id: number) {
@@ -55,6 +84,19 @@ export class AssetsService {
         console.log('[AssetsService.update] id, payload:', id, JSON.stringify(data));
       }
 
+      // Obtener el activo actual para validar reglas de negocio
+      const existingAsset = await this.prisma.asset.findUnique({ where: { id } });
+      if (!existingAsset) throw new NotFoundException(`Activo con ID ${id} no encontrado`);
+
+      // Si el activo está asignado, no permitir cambiar el estado ni la fecha de recepción
+      const isAssigned = existingAsset.status === 'assigned' || !!existingAsset.assignedPersonId;
+      if (isAssigned) {
+        // Si el cliente intenta modificar el estado o la fecha de recepción
+        if ((data.status !== undefined && data.status !== existingAsset.status) || (data.receivedDate !== undefined && data.receivedDate !== null)) {
+          throw new BadRequestException('No puedes editar este dispositivo hasta que no tenga una asignación activa');
+        }
+      }
+
       // Normalizar posibles campos de fecha que vienen como strings desde el frontend
       const payload: any = { ...data };
       const dateFields = ['purchaseDate', 'deliveryDate', 'receivedDate'];
@@ -65,7 +107,38 @@ export class AssetsService {
         }
       }
 
-      return await this.prisma.asset.update({ where: { id }, data: payload });
+      // Construir objeto limpio para evitar enviar propiedades undefined/''
+      const updateData: any = {};
+      for (const key of Object.keys(payload)) {
+        const val = payload[key];
+        if (val === undefined) continue;
+        // Evitar enviar cadenas vacías que puedan sobrescribir valores existentes
+        if (typeof val === 'string' && val.trim() === '') continue;
+        updateData[key] = val;
+      }
+
+      // Si el activo está asignado, asegurar que no podamos modificar campos
+      // críticos que llevarían a dejarlo en disponible accidentalmente.
+      if (isAssigned) {
+        if (process.env.DEBUG_ASSETS_SERVICE === 'true') {
+          console.log('[AssetsService.update] activo asignado - impidiendo cambios en status/receivedDate/assignedPersonId');
+          console.log('[AssetsService.update] payload antes de limpiar:', payload);
+          console.log('[AssetsService.update] updateData antes de borrar campos:', updateData);
+        }
+        delete updateData.status;
+        delete updateData.receivedDate;
+        // Evitar quitar la referencia a la persona asignada desde un update
+        // genérico de activo (se gestiona desde AssignmentHistory)
+        delete updateData.assignedPersonId;
+        if (process.env.DEBUG_ASSETS_SERVICE === 'true') {
+          console.log('[AssetsService.update] updateData después de borrar campos:', updateData);
+        }
+      }
+
+      if (process.env.DEBUG_ASSETS_SERVICE === 'true') {
+        console.log('[AssetsService.update] Ejecutando prisma.asset.update con:', updateData);
+      }
+      return await this.prisma.asset.update({ where: { id }, data: updateData });
     } catch (error) {
       // Log the error to help debugging
       console.error('[AssetsService.update] caught error:', error && error.stack ? error.stack : error);

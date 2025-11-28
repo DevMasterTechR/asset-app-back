@@ -28,15 +28,42 @@ export class PeopleService {
     }
   }
 
-  // Obtener todas las personas
-  async findAll() {
-    return this.prisma.person.findMany({
-      include: {
-        department: true,
-        role: true,
-        branch: true,
-      },
-    });
+  // Obtener todas las personas con soporte de búsqueda y paginación
+  async findAll(q?: string, page = 1, limit = 10) {
+    const where: any = {};
+
+    if (q && q.trim().length > 0) {
+      const term = q.trim();
+      where.OR = [
+        { firstName: { contains: term, mode: 'insensitive' } },
+        { lastName: { contains: term, mode: 'insensitive' } },
+        { username: { contains: term, mode: 'insensitive' } },
+        { nationalId: { contains: term, mode: 'insensitive' } },
+      ];
+    }
+
+    const take = Number(limit) > 0 ? Number(limit) : 10;
+    const skip = (Number(page) > 1 ? Number(page) - 1 : 0) * take;
+
+    const [data, total] = await Promise.all([
+      this.prisma.person.findMany({
+        where,
+        include: { department: true, role: true, branch: true },
+        skip,
+        take,
+      }),
+      this.prisma.person.count({ where }),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / take));
+
+    return {
+      data,
+      total,
+      page: Number(page),
+      limit: take,
+      totalPages,
+    };
   }
 
   // Obtener persona por ID

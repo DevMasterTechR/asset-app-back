@@ -10,6 +10,7 @@ import {
     HttpCode,
     HttpStatus,
     NotFoundException,
+    Query,
 } from '@nestjs/common';
 import {
     ApiTags,
@@ -65,13 +66,15 @@ export class AdminPeopleController {
 
     @Get()
 
-    @ApiOperation({ summary: 'Obtener todas las personas' })
+    @ApiOperation({ summary: 'Obtener todas las personas (soporta búsqueda y paginación con query params q,page,limit)' })
     @ApiOkResponse({
-        description: 'Lista de personas',
+        description: 'Lista de personas (paginated)',
         type: [CreatePersonDto],
     })
-    findAll() {
-        return this.peopleService.findAll();
+    findAll(@Query('q') q?: string, @Query('page') page?: string, @Query('limit') limit?: string) {
+        const pageNum = page ? Number(page) : undefined;
+        const limitNum = limit ? Number(limit) : undefined;
+        return this.peopleService.findAll(q, pageNum, limitNum);
     }
 
     @Get(':id')

@@ -8,6 +8,7 @@ SELECT * FROM public."StorageCapacity"
 
 SELECT * FROM public."SimCard"
 
+SELECT * FROM public."NetworkDevice"
 
 
 SELECT * FROM public."PowerStrip"

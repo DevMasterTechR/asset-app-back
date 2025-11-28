@@ -12,6 +12,7 @@ import {
     Req,
     BadRequestException,
     UseGuards,
+    Query,
 } from '@nestjs/common';
 import {
     ApiTags,
@@ -60,18 +61,22 @@ export class AssetsController {
 
     @Get()
     @AdminOnly()
-    @ApiOperation({ summary: 'Obtener todos los activos' })
-    @ApiOkResponse({ description: 'Lista de activos', type: [CreateAssetDto] })
-    findAll() {
-        return this.assetsService.findAll();
+    @ApiOperation({ summary: 'Obtener todos los activos (soporta búsqueda y paginación con q,page,limit)' })
+    @ApiOkResponse({ description: 'Lista de activos (paginated)', type: [CreateAssetDto] })
+    findAll(@Query('q') q?: string, @Query('page') page?: string, @Query('limit') limit?: string) {
+        const pageNum = page ? Number(page) : undefined;
+        const limitNum = limit ? Number(limit) : undefined;
+        return this.assetsService.findAll(q, pageNum ?? 1, limitNum ?? 10);
     }
 
     @Get('public')
     @Authenticated()
-    @ApiOperation({ summary: 'Obtener todos los activos (vista pública para usuarios autenticados)' })
-    @ApiOkResponse({ description: 'Lista pública de activos', type: [CreateAssetDto] })
-    findAllPublic() {
-        return this.assetsService.findAll();
+    @ApiOperation({ summary: 'Obtener todos los activos (vista pública para usuarios autenticados). Soporta q,page,limit.' })
+    @ApiOkResponse({ description: 'Lista pública de activos (paginated)', type: [CreateAssetDto] })
+    findAllPublic(@Query('q') q?: string, @Query('page') page?: string, @Query('limit') limit?: string) {
+        const pageNum = page ? Number(page) : undefined;
+        const limitNum = limit ? Number(limit) : undefined;
+        return this.assetsService.findAll(q, pageNum ?? 1, limitNum ?? 10);
     }
 
     @Get(':id')
