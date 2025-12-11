@@ -167,4 +167,43 @@ export class AssetsService {
       where: { assignedPersonId: userId },
     });
   }
+
+  async getAssetsGroupedByPerson() {
+    const people = await this.prisma.person.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        username: true,
+        departmentId: true,
+        roleId: true,
+        branchId: true,
+        assets: {
+          select: {
+            id: true,
+            assetCode: true,
+            assetType: true,
+            brand: true,
+            model: true,
+            status: true,
+            serialNumber: true,
+            purchaseDate: true,
+            deliveryDate: true,
+            receivedDate: true,
+          },
+        },
+      },
+      orderBy: { id: 'asc' },
+    });
+
+    return people.map((p) => ({
+      person: {
+        id: p.id,
+        name: `${p.firstName} ${p.lastName}`.trim(),
+        username: p.username,
+      },
+      assets: p.assets,
+      count: p.assets.length,
+    }));
+  }
 }

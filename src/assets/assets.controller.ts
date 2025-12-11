@@ -113,4 +113,12 @@ export class AssetsController {
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.assetsService.remove(id);
     }
+
+    @Get('by-person')
+    @Authenticated()
+    @ApiOperation({ summary: 'Listado de equipos agrupados por persona' })
+    @ApiOkResponse({ description: 'Agrupación persona → activos' })
+    getAssetsGroupedByPerson() {
+        return this.assetsService.getAssetsGroupedByPerson();
+    }
 }

@@ -18,17 +18,21 @@ export class RolesGuard implements CanActivate {
         ]);
 
         if (!requiredRoles || requiredRoles.length === 0) {
-            return true; 
+            return true;
         }
 
         const request = context.switchToHttp().getRequest();
         const user = request.user;
 
-        if (!user || !user.role) {
-            throw new ForbiddenException('Rol no encontrado');
+        const userRoleRaw = (user?.role?.name ?? user?.role ?? '').toString();
+        if (!userRoleRaw) {
+            throw new ForbiddenException('Rol no encontrado en el token');
         }
 
-        if (!requiredRoles.includes(user.role)) {
+        const userRole = userRoleRaw.toLowerCase();
+        const normalizedRequired = requiredRoles.map((r) => r.toLowerCase());
+
+        if (!normalizedRequired.includes(userRole)) {
             throw new ForbiddenException('Acceso denegado: rol insuficiente');
         }
 
