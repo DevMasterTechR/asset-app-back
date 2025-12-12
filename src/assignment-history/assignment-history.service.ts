@@ -19,12 +19,24 @@ export class AssignmentHistoryService {
         throw new BadRequestException('El activo no está disponible para asignación');
       }
 
+      // Obtener persona para calcular sucursal por defecto y validar existencia
+      const person = await this.prisma.person.findUnique({ where: { id: data.personId } });
+      if (!person) throw new NotFoundException(`Persona con ID ${data.personId} no encontrada`);
+
+      // Definir sucursal priorizando payload -> asset -> persona
+      const resolvedBranchId =
+        data.branchId !== undefined && data.branchId !== null
+          ? data.branchId
+          : asset.branchId ?? person.branchId ?? undefined;
+
+      const assignmentData = { ...data, branchId: resolvedBranchId };
+
       // Crear historial y actualizar estado del activo en una transacción
       // Incluir relaciones en el assignment creado para que el frontend tenga
       // directamente la información del activo, persona y sucursal.
       const result = await this.prisma.$transaction([
         this.prisma.assignmentHistory.create({
-          data,
+          data: assignmentData,
           include: { asset: true, person: true, branch: true },
         }),
         this.prisma.asset.update({
@@ -32,7 +44,7 @@ export class AssignmentHistoryService {
           data: {
             status: 'assigned',
             assignedPersonId: data.personId,
-            branchId: data.branchId ?? asset.branchId,
+            branchId: resolvedBranchId ?? asset.branchId,
             // Establecer la fecha de entrega en el asset cuando se crea la asignación
             deliveryDate: data.assignmentDate ? new Date(data.assignmentDate) : new Date(),
             // Al asignar, la fecha de recepción debe limpiarse (no recibido aún)
@@ -68,14 +80,13 @@ export class AssignmentHistoryService {
 
   async update(id: number, data: UpdateAssignmentHistoryDto) {
     try {
+      const existing = await this.prisma.assignmentHistory.findUnique({ where: { id }, include: { asset: true } });
+      if (!existing) throw new NotFoundException(`Historial con ID ${id} no encontrado`);
+
       // Si se registra devolución (returnDate o returnCondition), actualizar también el asset
       const shouldUpdateAsset = data.returnDate !== undefined || data.returnCondition !== undefined;
 
       if (shouldUpdateAsset) {
-        // Obtener historial actual para conocer el assetId
-        const existing = await this.prisma.assignmentHistory.findUnique({ where: { id } });
-        if (!existing) throw new NotFoundException(`Historial con ID ${id} no encontrado`);
-
         // Si se registra una devolución, además de marcar el activo como
         // disponible debemos guardar la fecha de recepción (`receivedDate`) en
         // la tabla de assets. Usamos la `returnDate` proporcionada por el
@@ -98,7 +109,43 @@ export class AssignmentHistoryService {
         return { assignment: txResult[0], asset: txResult[1] };
       }
 
-      return await this.prisma.assignmentHistory.update({ where: { id }, data });
+      // Reasignación de dueño / actualización de sucursal sin devolución
+      const targetPersonId = data.personId ?? existing.personId;
+      const targetPerson = await this.prisma.person.findUnique({ where: { id: targetPersonId } });
+      if (!targetPerson) throw new NotFoundException(`Persona con ID ${targetPersonId} no encontrada`);
+
+      // Validar que el nuevo dueño no tenga asignaciones activas distintas a la actual
+      if (targetPersonId !== existing.personId) {
+        const activeForPerson = await this.prisma.assignmentHistory.findFirst({
+          where: { personId: targetPersonId, returnDate: null },
+        });
+        if (activeForPerson) {
+          throw new BadRequestException('La persona seleccionada ya tiene asignaciones activas.');
+        }
+      }
+
+      // Determinar sucursal final
+      const resolvedBranchId =
+        data.branchId !== undefined && data.branchId !== null
+          ? data.branchId
+          : existing.branchId ?? existing.asset?.branchId ?? targetPerson.branchId ?? undefined;
+
+      const txResult = await this.prisma.$transaction([
+        this.prisma.assignmentHistory.update({
+          where: { id },
+          data: { ...data, personId: targetPersonId, branchId: resolvedBranchId },
+        }),
+        this.prisma.asset.update({
+          where: { id: existing.assetId },
+          data: {
+            status: 'assigned',
+            assignedPersonId: targetPersonId,
+            branchId: resolvedBranchId ?? existing.asset.branchId,
+          },
+        }),
+      ]);
+
+      return { assignment: txResult[0], asset: txResult[1] };
     } catch (error) {
       handlePrismaError(error, 'Historial', id);
     }

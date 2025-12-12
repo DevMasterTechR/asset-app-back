@@ -48,13 +48,12 @@ export const setAuthCookie = (res: Response, token: string) => {
     // Determinar si hay HTTPS disponible (certificados configurados)
     const hasHttps = !!(process.env.SSL_KEY_PATH && process.env.SSL_CERT_PATH);
 
-    // Use SameSite=None only when Secure is enabled (HTTPS). Modern browsers
-    // will reject cookies with SameSite=None unless Secure=true. For local
-    // development without HTTPS, fall back to 'lax' to ensure the cookie is
-    // accepted and sent by the browser (different ports on localhost are
-    // considered same-site by registrable domain rules).
-    const secureFlag = hasHttps;
-    const sameSiteVal: any = secureFlag ? 'none' : 'lax';
+    // Elegir SameSite según entorno:
+    // - Desarrollo local (sin HTTPS): sameSite 'lax', secure false → funciona entre puertos sin HTTPS
+    // - Producción (con HTTPS): sameSite 'none', secure true → requerido por navegadores modernos para cross-site
+    const isProduction = process.env.NODE_ENV === 'production';
+    const secureFlag = hasHttps || isProduction;
+    const sameSiteVal: any = isProduction ? 'none' : 'lax';
 
     const configuredMax = Number(process.env.AUTH_COOKIE_MAX_AGE ?? DEFAULT_MAX_AGE);
     res.cookie('jwt', value, {
@@ -62,6 +61,7 @@ export const setAuthCookie = (res: Response, token: string) => {
         secure: secureFlag,
         sameSite: sameSiteVal,
         maxAge: configuredMax,
+        path: '/',
     });
 };
 

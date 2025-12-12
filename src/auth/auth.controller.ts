@@ -58,9 +58,9 @@ export class AuthController {
 
     @Get('me')
     @Authenticated()
-  async me(@Req() req: Request) {
-    return req.user; // <- ya tienes el usuario validado por JWT
-  }
+    async me(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+        return this.authHandler.handleMe(req, res);
+    }
 
     @UseGuards(JwtAuthGuard)
     @Post('change-password')

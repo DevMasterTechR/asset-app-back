@@ -118,9 +118,29 @@ export class PeopleService {
   // Eliminar persona
   async remove(id: number) {
     try {
-      return await this.prisma.person.delete({
+      // Obtener la persona y su rol
+      const person = await this.prisma.person.findUnique({
         where: { id },
+        include: { role: true },
       });
+
+      if (!person) {
+        throw new NotFoundException(`Persona con ID ${id} no encontrada`);
+      }
+
+      // Si es administrador, asegurar que quede al menos uno en el sistema
+      const isAdmin = person.role?.name?.toLowerCase() === 'admin';
+      if (isAdmin) {
+        const adminCount = await this.prisma.person.count({
+          where: { role: { is: { name: 'Admin' } } },
+        });
+
+        if (adminCount <= 1) {
+          throw new BadRequestException('No se puede eliminar: debe existir al menos un Administrador en el sistema');
+        }
+      }
+
+      return await this.prisma.person.delete({ where: { id } });
     } catch (error) {
       this.handlePrismaError(error, id);
     }
