@@ -24,7 +24,11 @@ export class RolesGuard implements CanActivate {
         const request = context.switchToHttp().getRequest();
         const user = request.user;
 
-        const userRoleRaw = (user?.role?.name ?? user?.role ?? '').toString();
+        // El rol puede venir como string directo (role: "admin") o como objeto (role: { name: "admin" })
+        const userRoleRaw = typeof user?.role === 'string' 
+            ? user.role 
+            : (user?.role?.name ?? '');
+        
         if (!userRoleRaw) {
             throw new ForbiddenException('Rol no encontrado en el token');
         }

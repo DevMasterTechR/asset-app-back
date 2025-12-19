@@ -56,7 +56,19 @@ export class AssetsService {
     const skip = (Number(page) > 1 ? Number(page) - 1 : 0) * take;
 
     const [data, total] = await Promise.all([
-      this.prisma.asset.findMany({ where, skip, take }),
+      this.prisma.asset.findMany({ 
+        where, 
+        skip, 
+        take,
+        include: {
+          branch: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      }),
       this.prisma.asset.count({ where }),
     ]);
 
