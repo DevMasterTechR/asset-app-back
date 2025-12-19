@@ -13,10 +13,10 @@ import { AuthHandlerService } from './services/auth-handler.service';
     PassportModule,
     JwtModule.register({
       secret: jwtConstants.secret,
-      // Por defecto usamos una expiración larga para evitar que el usuario sea
-      // desconectado automáticamente en entorno de desarrollo. Puede ajustarse
-      // con la variable `AUTH_TOKEN_EXPIRES_IN` (ej: '1h', '7d', '365d').
-      signOptions: { expiresIn: process.env.AUTH_TOKEN_EXPIRES_IN ?? '365d' },
+      // Expiración muy larga (999 días) para que la sesión no caduque automáticamente.
+      // El usuario solo puede cerrar sesión de forma manual.
+      // Puede ajustarse con la variable `AUTH_TOKEN_EXPIRES_IN` (ej: '1h', '7d', '365d', '999d').
+      signOptions: { expiresIn: process.env.AUTH_TOKEN_EXPIRES_IN ?? '999d' },
     }),
   ],
   controllers: [AuthController],
