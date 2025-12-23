@@ -10,6 +10,7 @@ import {
     HttpCode,
     HttpStatus,
     UseGuards,
+    Request,
 } from '@nestjs/common';
 import { AssignmentHistoryService } from './assignment-history.service';
 import { CreateAssignmentHistoryDto } from './dto/create-assignment-history.dto';
@@ -26,6 +27,8 @@ import {
     ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { Roles } from 'src/common/decorators/roles.decorator';
 
 @ApiTags('Assignment History')
 @UseGuards(JwtAuthGuard)
@@ -56,6 +59,20 @@ export class AssignmentHistoryController {
     })
     findAll() {
         return this.service.findAll();
+    }
+
+    @Get('user/my-assignments')
+    @UseGuards(RolesGuard)
+    @Roles('Admin', 'Usuario')
+    @ApiOperation({ summary: 'Obtener asignaciones del usuario conectado' })
+    @ApiOkResponse({
+        description: 'Lista de asignaciones del usuario',
+        type: [CreateAssignmentHistoryDto],
+    })
+    findMyAssignments(@Request() req) {
+        // req.user.sub es el personId (viene del JWT)
+        const personId = req.user.personId || req.user.sub;
+        return this.service.findByPersonId(personId);
     }
 
     @Get(':id')

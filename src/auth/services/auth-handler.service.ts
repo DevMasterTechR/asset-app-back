@@ -37,10 +37,8 @@ export class AuthHandlerService {
         const user = req.user as { sub: number };
         if (!user?.sub) throw new UnauthorizedException('Usuario no autenticado');
 
-        const token = await this.authService.login({ id: user.sub });
-        setAuthCookie(res, token.access_token);
-
-        const userData = await this.prisma.person.findUnique({
+        // Traer el usuario completo con su rol para refrescar datos y token
+        const person = await this.prisma.person.findUnique({
             where: { id: user.sub },
             select: {
                 id: true,
@@ -52,9 +50,21 @@ export class AuthHandlerService {
                 departmentId: true,
                 roleId: true,
                 branchId: true,
+                role: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
             },
         });
 
-        return userData;
+        if (!person) throw new UnauthorizedException('Usuario no encontrado');
+
+        // Regenerar cookie con el rol correcto en el payload
+        const token = await this.authService.login(person);
+        setAuthCookie(res, token.access_token);
+
+        return person;
     }
 }

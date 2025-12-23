@@ -67,6 +67,14 @@ export class AssignmentHistoryService {
     });
   }
 
+  async findByPersonId(personId: number) {
+    return this.prisma.assignmentHistory.findMany({
+      where: { personId },
+      include: { asset: true, person: true, branch: true },
+      orderBy: { assignmentDate: 'desc' },
+    });
+  }
+
   async findOne(id: number) {
     const record = await this.prisma.assignmentHistory.findUnique({
       where: { id },
