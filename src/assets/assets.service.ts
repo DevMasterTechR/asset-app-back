@@ -60,7 +60,23 @@ export class AssetsService {
         where, 
         skip, 
         take,
-        include: {
+        select: {
+          id: true,
+          assetCode: true,
+          assetType: true,
+          serialNumber: true,
+          brand: true,
+          model: true,
+          status: true,
+          branchId: true,
+          assignedPersonId: true,
+          purchaseDate: true,
+          deliveryDate: true,
+          receivedDate: true,
+          notes: true,
+          attributesJson: true,
+          createdAt: true,
+          updatedAt: true,
           branch: {
             select: {
               id: true,
@@ -178,6 +194,48 @@ export class AssetsService {
     return this.prisma.asset.findMany({
       where: { assignedPersonId: userId },
     });
+  }
+
+  async findByAssignedPersonId(personId: number) {
+    console.log('[AssetsService] Buscando asignaciones para personId:', personId);
+    
+    // Obtener asignaciones activas (sin fecha de devolución)
+    const activeAssignments = await this.prisma.assignmentHistory.findMany({
+      where: { 
+        personId,
+        returnDate: null, // Solo asignaciones activas
+      },
+      include: {
+        asset: {
+          select: {
+            id: true,
+            assetCode: true,
+            assetType: true,
+            brand: true,
+            model: true,
+            serialNumber: true,
+            status: true,
+            purchaseDate: true,
+          },
+        },
+      },
+    });
+
+    console.log('[AssetsService] Asignaciones encontradas:', activeAssignments.length);
+    console.log('[AssetsService] Asignaciones:', JSON.stringify(activeAssignments, null, 2));
+
+    // Retornar solo los assets
+    const assets = activeAssignments.map(assignment => assignment.asset);
+    console.log('[AssetsService] Assets a retornar:', assets);
+    return assets;
+  }
+
+  async findUniqueAssetTypes() {
+    const types = await this.prisma.asset.findMany({
+      distinct: ['assetType'],
+      select: { assetType: true },
+    });
+    return types.map((t) => t.assetType).filter((t) => t);
   }
 
   async getAssetsGroupedByPerson() {

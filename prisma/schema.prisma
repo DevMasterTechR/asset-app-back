@@ -60,6 +60,20 @@ enum SimStatus {
   suspendido
 }
 
+enum RequestType {
+  equipment_replacement
+  consumables
+  equipment_request
+}
+
+enum RequestStatus {
+  pendiente_rrhh
+  rrhh_rechazada
+  pendiente_admin
+  aceptada
+  rechazada
+}
+
 //
 // MODELS
 //
@@ -120,6 +134,9 @@ model Person {
   assets              Asset[]             @relation("PersonAssets")
   assignmentHistories AssignmentHistory[]
   credentials         Credential[]
+  requests            Request[]
+  hrReviewedRequests  Request[]     @relation("HrReviewer")
+  adminReviewedRequests Request[]   @relation("AdminReviewer")
 }
 
 model Asset {
@@ -258,4 +275,24 @@ model SimCard {
   updatedAt      DateTime    @updatedAt
 
   asset Asset @relation(fields: [assetId], references: [id])
+}
+
+model Request {
+  id              Int           @id @default(autoincrement())
+  code            String        @unique
+  personId        Int
+  type            RequestType
+  status          RequestStatus @default(pendiente_rrhh)
+  payload         Json?
+  hrReason        String?
+  adminReason     String?
+  hrReviewerId    Int?
+  adminReviewerId Int?
+  hrSeenAt        DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  person          Person        @relation(fields: [personId], references: [id])
+  hrReviewer      Person?       @relation("HrReviewer", fields: [hrReviewerId], references: [id])
+  adminReviewer   Person?       @relation("AdminReviewer", fields: [adminReviewerId], references: [id])
 }

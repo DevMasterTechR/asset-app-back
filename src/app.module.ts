@@ -18,6 +18,7 @@ import { PowerStripModule } from './power-strip/power-strip.module';
 import { AssignmentHistoryModule } from './assignment-history/assignment-history.module';
 import { CredentialsModule } from './credentials/credentials.module';
 import { SimCardsModule } from './sim-cards/sim-cards.module';
+import { RequestsModule } from './requests/requests.module';
 
 @Module({
     imports: [
@@ -36,6 +37,7 @@ import { SimCardsModule } from './sim-cards/sim-cards.module';
         AssignmentHistoryModule,
         CredentialsModule,
         SimCardsModule,
+        RequestsModule,
     ],
     controllers: [AppController],
     providers: [AppService],

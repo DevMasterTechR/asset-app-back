@@ -63,7 +63,7 @@ export class AssignmentHistoryController {
 
     @Get('user/my-assignments')
     @UseGuards(RolesGuard)
-    @Roles('Admin', 'Usuario')
+    @Roles('Admin', 'Usuario', 'Recursos Humanos', 'RRHH', 'Human Resources')
     @ApiOperation({ summary: 'Obtener asignaciones del usuario conectado' })
     @ApiOkResponse({
         description: 'Lista de asignaciones del usuario',

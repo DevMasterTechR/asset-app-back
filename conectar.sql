@@ -16,18 +16,6 @@ SELECT * FROM public."Role"
 SELECT * FROM public."PowerStrip"
 
 
-SELECT * FROM public."Branch"
-
-DO $$ DECLARE
-    tablas TEXT;
-BEGIN
-    SELECT string_agg(format('%I.%I', schemaname, tablename), ', ')
-    INTO tablas
-    FROM pg_tables
-    WHERE schemaname NOT IN ('pg_catalog', 'information_schema');
-
-    EXECUTE 'TRUNCATE TABLE ' || tablas || ' RESTART IDENTITY CASCADE';
-END $$;
 
 
 INSERT INTO public."Person" (
