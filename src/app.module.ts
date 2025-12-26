@@ -16,6 +16,7 @@ import { UtpCableModule } from './utp-cable/utp-cable.module';
 import { Rj45ConnectorModule } from './rj45-connector/rj45-connector.module';
 import { PowerStripModule } from './power-strip/power-strip.module';
 import { AssignmentHistoryModule } from './assignment-history/assignment-history.module';
+import { LoansModule } from './loans/loans.module';
 import { CredentialsModule } from './credentials/credentials.module';
 import { SimCardsModule } from './sim-cards/sim-cards.module';
 import { RequestsModule } from './requests/requests.module';
@@ -35,6 +36,7 @@ import { RequestsModule } from './requests/requests.module';
         Rj45ConnectorModule,
         PowerStripModule,
         AssignmentHistoryModule,
+        LoansModule,
         CredentialsModule,
         SimCardsModule,
         RequestsModule,

@@ -15,7 +15,9 @@ SELECT * FROM public."Role"
 
 SELECT * FROM public."PowerStrip"
 
+SELECT * FROM public."Request"
 
+SELECT * FROM public._prisma_migrations
 
 
 INSERT INTO public."Person" (

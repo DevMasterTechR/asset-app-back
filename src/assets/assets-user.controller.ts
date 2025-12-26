@@ -12,16 +12,8 @@ export class AssetsUserController {
   @Get('user/assigned')
   @ApiOperation({ summary: 'Obtener equipos asignados al usuario' })
   async getUserAssets(@Request() req) {
-    console.log('\n========== GET /assets/user/assigned ==========');
-    console.log('[AssetsUserController] User JWT payload:', JSON.stringify(req.user, null, 2));
     const personId = Number(req.user.personId ?? req.user.sub);
-    console.log('[AssetsUserController] PersonId extraído:', personId);
-    
-    const assets = await this.assetsService.findByAssignedPersonId(personId);
-    
-    console.log('[AssetsUserController] Assets a retornar:', JSON.stringify(assets, null, 2));
-    console.log('========== FIN GET /assets/user/assigned ==========\n');
-    return assets;
+    return await this.assetsService.findByAssignedPersonId(personId);
   }
 
   @Get('types')

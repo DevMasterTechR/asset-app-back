@@ -197,8 +197,6 @@ export class AssetsService {
   }
 
   async findByAssignedPersonId(personId: number) {
-    console.log('[AssetsService] Buscando asignaciones para personId:', personId);
-    
     // Obtener asignaciones activas (sin fecha de devolución)
     const activeAssignments = await this.prisma.assignmentHistory.findMany({
       where: { 
@@ -221,13 +219,8 @@ export class AssetsService {
       },
     });
 
-    console.log('[AssetsService] Asignaciones encontradas:', activeAssignments.length);
-    console.log('[AssetsService] Asignaciones:', JSON.stringify(activeAssignments, null, 2));
-
     // Retornar solo los assets
-    const assets = activeAssignments.map(assignment => assignment.asset);
-    console.log('[AssetsService] Assets a retornar:', assets);
-    return assets;
+    return activeAssignments.map(assignment => assignment.asset);
   }
 
   async findUniqueAssetTypes() {

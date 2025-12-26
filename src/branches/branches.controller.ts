@@ -44,12 +44,12 @@ const ApiNotFound = (description = 'Sucursal no encontrada') =>
 
 
 @ApiTags('Branches')
-@AdminOnly()
 @Controller('branches')
 export class BranchesController {
     constructor(private readonly branchesService: BranchesService) { }
 
     @Post()
+    @AdminOnly()
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ summary: 'Crear una nueva sucursal' })
     @ApiCreatedResponse({
@@ -88,6 +88,7 @@ export class BranchesController {
     }
 
     @Put(':id')
+    @AdminOnly()
     @ApiOperation({ summary: 'Actualizar una sucursal' })
     @ApiIdParam()
     @ApiBody({ type: UpdateBranchDto })
@@ -107,6 +108,7 @@ export class BranchesController {
     }
 
     @Delete(':id')
+    @AdminOnly()
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ summary: 'Eliminar una sucursal' })
     @ApiIdParam()

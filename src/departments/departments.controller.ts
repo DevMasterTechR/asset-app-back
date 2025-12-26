@@ -43,12 +43,12 @@ const ApiNotFound = (description = 'Departamento no encontrado') =>
     ApiNotFoundResponse({ description });
 
 @ApiTags('Departments')
-@AdminOnly()
 @Controller('departments')
 export class DepartmentsController {
     constructor(private readonly departmentsService: DepartmentsService) { }
 
     @Post()
+    @AdminOnly()
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ summary: 'Crear un nuevo departamento' })
     @ApiCreatedResponse({
@@ -88,6 +88,7 @@ export class DepartmentsController {
     }
 
     @Put(':id')
+    @AdminOnly()
     @ApiOperation({ summary: 'Actualizar un departamento por ID' })
     @ApiIdParam()
     @ApiBody({ type: UpdateDepartmentDto })
@@ -108,6 +109,7 @@ export class DepartmentsController {
     }
 
     @Delete(':id')
+    @AdminOnly()
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ summary: 'Eliminar un departamento por ID' })
     @ApiIdParam()

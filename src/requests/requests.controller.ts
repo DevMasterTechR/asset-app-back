@@ -16,7 +16,8 @@ export class RequestsController {
   @ApiOperation({ summary: 'Crear solicitud (usuario)' })
   async create(@Request() req, @Body() body: { type: RequestType; payload?: any }) {
     const personId = req.user.personId || req.user.sub;
-    return this.service.create(Number(personId), { type: body.type, payload: body.payload });
+    const userRole = req.user.role?.name || req.user.role || '';
+    return this.service.create(Number(personId), { type: body.type, payload: body.payload }, userRole);
   }
 
   @Get()

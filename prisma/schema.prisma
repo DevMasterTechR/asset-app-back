@@ -64,6 +64,7 @@ enum RequestType {
   equipment_replacement
   consumables
   equipment_request
+  new_employee
 }
 
 enum RequestStatus {
@@ -89,6 +90,7 @@ model Branch {
   people Person[]
   assets Asset[]
   assignmentHistories AssignmentHistory[]
+  loans Loan[] @relation("LoanBranches")
 }
 
 model Department {
@@ -133,6 +135,7 @@ model Person {
 
   assets              Asset[]             @relation("PersonAssets")
   assignmentHistories AssignmentHistory[]
+  loans Loan[] @relation("LoanPersons")
   credentials         Credential[]
   requests            Request[]
   hrReviewedRequests  Request[]     @relation("HrReviewer")
@@ -161,6 +164,7 @@ model Asset {
   assignedPerson Person?           @relation("PersonAssets", fields: [assignedPersonId], references: [id], onDelete: SetNull)
   storageCapacities StorageCapacity[]
   assignmentHistories AssignmentHistory[]
+  loans Loan[] @relation("LoanAssets")
   simCards SimCard[]
 }
 
@@ -247,6 +251,26 @@ model AssignmentHistory {
   asset   Asset   @relation(fields: [assetId], references: [id])
   person  Person  @relation(fields: [personId], references: [id])
   branch  Branch? @relation(fields: [branchId], references: [id])
+}
+
+model Loan {
+  id               Int        @id @default(autoincrement())
+  assetId          Int
+  personId         Int
+  branchId         Int?
+  loanDate         DateTime   @default(now())
+  returnDate       DateTime?
+  loanDays         Int
+  deliveryCondition Condition @default(good)
+  returnCondition  Condition?
+  deliveryNotes    String?
+  returnNotes      String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  asset   Asset   @relation("LoanAssets", fields: [assetId], references: [id])
+  person  Person  @relation("LoanPersons", fields: [personId], references: [id])
+  branch  Branch? @relation("LoanBranches", fields: [branchId], references: [id])
 }
 
 model Credential {
