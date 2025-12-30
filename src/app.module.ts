@@ -10,6 +10,10 @@ import { AssetsModule } from './assets/assets.module';
 import { PeopleModule } from './people/people.module';
 import { AuthModule } from './auth/auth.module';
 import { InkModule } from './ink/ink.module';
+import { MouseModule } from './mouse/mouse.module';
+import { KeyboardModule } from './keyboard/keyboard.module';
+import { MousePadModule } from './mouse-pad/mouse-pad.module';
+import { MemoryAdapterModule } from './memory-adapter/memory-adapter.module';
 
 import { UtpCableModule } from './utp-cable/utp-cable.module';
 
@@ -20,6 +24,9 @@ import { LoansModule } from './loans/loans.module';
 import { CredentialsModule } from './credentials/credentials.module';
 import { SimCardsModule } from './sim-cards/sim-cards.module';
 import { RequestsModule } from './requests/requests.module';
+import { HubModule } from './hub/hub.module';
+import { SupportModule } from './support/support.module';
+import { NetworkAdapterModule } from './network-adapter/network-adapter.module';
 
 @Module({
     imports: [
@@ -32,6 +39,10 @@ import { RequestsModule } from './requests/requests.module';
         PeopleModule,
         AuthModule,
         InkModule,
+        MouseModule,
+        KeyboardModule,
+        MousePadModule,
+        MemoryAdapterModule,
         UtpCableModule,
         Rj45ConnectorModule,
         PowerStripModule,
@@ -40,6 +51,9 @@ import { RequestsModule } from './requests/requests.module';
         CredentialsModule,
         SimCardsModule,
         RequestsModule,
+        HubModule,
+        SupportModule,
+        NetworkAdapterModule,
     ],
     controllers: [AppController],
     providers: [AppService],

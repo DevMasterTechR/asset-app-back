@@ -14,6 +14,7 @@ datasource db {
 enum AssetStatus {
   available
   assigned
+  loaned
   maintenance
   decommissioned
 }
@@ -236,6 +237,65 @@ model PowerStrip {
   updatedAt    DateTime @updatedAt
 }
 
+model Mouse {
+  id           Int      @id @default(autoincrement())
+  brand        String
+  model        String
+  connectionType String? // USB, Bluetooth, Inalámbrico
+  dpi          Int?
+  color        String?
+  purchaseDate DateTime?
+  usageDate    DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Keyboard {
+  id           Int      @id @default(autoincrement())
+  brand        String
+  model        String
+  connectionType String? // USB, Bluetooth, Inalámbrico
+  layout       String? // Español, Inglés, etc.
+  language     String? // español, inglés
+  isNumeric    Boolean  @default(false)
+  color        String?
+  purchaseDate DateTime?
+  usageDate    DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model MousePad {
+  id           Int      @id @default(autoincrement())
+  brand        String?
+  model        String?
+  material     String?
+  size         String? // pequeño, mediano, grande
+  color        String?
+  purchaseDate DateTime?
+  usageDate    DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model MemoryAdapter {
+  id           Int      @id @default(autoincrement())
+  brand        String
+  model        String
+  adapterType  String? // SD a USB, MicroSD a USB, etc.
+  compatibility String? // SD, MicroSD, CF, etc.
+  speed        String? // USB 2.0, USB 3.0, USB-C
+  color        String?
+  purchaseDate DateTime?
+  usageDate    DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 model AssignmentHistory {
   id               Int        @id @default(autoincrement())
   assetId          Int
@@ -319,4 +379,45 @@ model Request {
   person          Person        @relation(fields: [personId], references: [id])
   hrReviewer      Person?       @relation("HrReviewer", fields: [hrReviewerId], references: [id])
   adminReviewer   Person?       @relation("AdminReviewer", fields: [adminReviewerId], references: [id])
+}
+
+model Hub {
+  id           Int      @id @default(autoincrement())
+  brand        String
+  model        String
+  portCount    Int?     // Número de puertos
+  usbType      String?  // USB 2.0, USB 3.0, USB-C
+  color        String?
+  purchaseDate DateTime?
+  usageDate    DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Support {
+  id           Int      @id @default(autoincrement())
+  type         String?  // plástico, metal
+  color        String?
+  brand        String?
+  model        String?
+  purchaseDate DateTime?
+  usageDate    DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model NetworkAdapter {
+  id           Int      @id @default(autoincrement())
+  brand        String
+  model        String
+  adapterType  String?  // Ethernet a USB, WiFi USB, etc.
+  speed        String?  // 10/100, Gigabit, etc.
+  color        String?
+  purchaseDate DateTime?
+  usageDate    DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

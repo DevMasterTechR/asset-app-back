@@ -49,7 +49,7 @@ export class LoansService {
         this.prisma.asset.update({
           where: { id: data.assetId },
           data: {
-            status: 'assigned',
+            status: 'loaned',
             assignedPersonId: data.personId,
             branchId: resolvedBranchId ?? asset.branchId,
             deliveryDate: data.loanDate ? new Date(data.loanDate) : new Date(),
