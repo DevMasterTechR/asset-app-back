@@ -20,7 +20,7 @@ export class CreateAssetDto {
     @IsNotEmpty()
     assetCode: string;
 
-    @ApiProperty({ description: 'Tipo de activo', example: 'Laptop' })
+    @ApiProperty({ description: 'Tipo de activo', example: 'Laptop, Cargador de Laptop, Mousepad, Maletín/Bolso, Soporte, Pantalla, HUB, Adaptador Memoria, Adaptador Red' })
     @IsString()
     @IsNotEmpty()
     assetType: string;
@@ -76,9 +76,9 @@ export class CreateAssetDto {
     notes?: string;
 
     @ApiPropertyOptional({
-        description: 'Atributos adicionales en formato JSON',
+        description: 'Atributos adicionales en formato JSON. Ejemplo por tipo: Mousepad: { tamano, color }, Maletín/Bolso: { color, marca, noMarca }, Soporte: { color, material }',
         type: Object,
-        example: { color: 'red', warranty: '2 years' },
+        example: { tamano: 'mediano', color: 'negro', marca: 'Targus', noMarca: false, material: 'aluminio' },
     })
     @IsOptional()
     attributesJson?: Record<string, any>;
