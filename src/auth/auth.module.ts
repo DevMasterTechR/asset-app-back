@@ -16,7 +16,7 @@ import { AuthHandlerService } from './services/auth-handler.service';
       // Expiración muy larga (999 días) para que la sesión no caduque automáticamente.
       // El usuario solo puede cerrar sesión de forma manual.
       // Puede ajustarse con la variable `AUTH_TOKEN_EXPIRES_IN` (ej: '1h', '7d', '365d', '999d').
-      signOptions: { expiresIn: process.env.AUTH_TOKEN_EXPIRES_IN ?? '999d' },
+        signOptions: { expiresIn: (process.env.AUTH_TOKEN_EXPIRES_IN ?? '999d') as any },
     }),
   ],
   controllers: [AuthController],
