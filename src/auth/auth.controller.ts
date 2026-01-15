@@ -48,27 +48,17 @@ export class AuthController {
     }
 
    @Post('logout')
-@UseGuards(JwtAuthGuard)
 @HttpCode(HttpStatus.OK)
+// Quita @UseGuards(JwtAuthGuard)  ← así siempre entra
 async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
   try {
     await this.authHandler.handleLogout(req, res);
-    
-    // Limpia cookie HTTP-only siempre (importante)
-    res.clearCookie('auth_token', { 
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production', 
-      sameSite: 'strict',
-      path: '/'
-    });
-
-    return { message: 'Sesión cerrada exitosamente' };
   } catch (error) {
-    console.error('Error durante logout:', error);
-    // Aún así limpia cookie y responde OK para no bloquear al frontend
-    res.clearCookie('auth_token', { /* mismas opciones */ });
-    return { message: 'Sesión cerrada (con advertencia interna)' };
+    // Ignora errores (token expirado, etc.)
   }
+  // Limpia cookie siempre (si usas HTTP-only)
+  res.clearCookie('auth_token', { httpOnly: true, secure: true, sameSite: 'strict', path: '/' });
+  return { message: 'Sesión cerrada' };
 }
 
     @Get('me')
