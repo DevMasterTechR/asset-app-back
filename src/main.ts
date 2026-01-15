@@ -41,7 +41,7 @@ async function bootstrap() {
     'http://192.168.50.95:8080',
     'http://localhost:8080',
     'http://localhost:5173',
-    'https://steady-crumble-eb147b.netlify.app',
+    'https://steady-crumble-eb147b.netlify.app'
   ],
     credentials: true,
   });
