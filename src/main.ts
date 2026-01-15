@@ -40,9 +40,8 @@ async function bootstrap() {
       origin: [
     'http://192.168.50.95:8080',
     'http://localhost:8080',
-    'http://localhost:3000',   
     'http://localhost:5173',
-    'https://asset-app-front.vercel.app/'
+    'https://asset-app-front.vercel.app',
   ],
     credentials: true,
   });
