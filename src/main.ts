@@ -42,7 +42,7 @@ async function bootstrap() {
     'http://localhost:8080',
     'http://localhost:3000',   
     'http://localhost:5173',
-    'https://asset-app-front.vercel.app'
+    'https://asset-app-front.vercel.app/'
   ],
     credentials: true,
   });
