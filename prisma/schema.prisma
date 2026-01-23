@@ -47,6 +47,7 @@ enum SystemType {
   glpi
   erp
   crm
+  tefl
 }
 
 enum SimPlanType {
