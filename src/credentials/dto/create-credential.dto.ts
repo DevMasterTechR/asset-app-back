@@ -18,6 +18,14 @@ export class CreateCredentialDto {
   @IsNotEmpty()
   username: string;
 
+  @ApiPropertyOptional({
+    description: 'Número telefónico asociado a la credencial',
+    example: '+593991234567',
+  })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
   @ApiProperty({
     description: 'Contraseña asociada a la credencial',
     example: 'secureP@ss123',
