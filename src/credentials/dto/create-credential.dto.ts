@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SystemType } from '@prisma/client';
 
@@ -14,9 +14,10 @@ export class CreateCredentialDto {
     description: 'Nombre de usuario para el acceso al sistema',
     example: 'johndoe',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  username: string;
+  @ValidateIf((o) => ['email', 'glpi', 'erp', 'crm'].includes(o.system))
+  username?: string;
 
   @ApiPropertyOptional({
     description: 'Número telefónico asociado a la credencial',
@@ -30,9 +31,10 @@ export class CreateCredentialDto {
     description: 'Contraseña asociada a la credencial',
     example: 'secureP@ss123',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  password: string;
+  @ValidateIf((o) => ['email', 'glpi', 'erp', 'crm'].includes(o.system))
+  password?: string;
 
   @ApiProperty({
     description: 'Sistema al que pertenece esta credencial',
