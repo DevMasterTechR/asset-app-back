@@ -13,7 +13,11 @@ export class CredentialsService {
 
   async create(data: CreateCredentialDto) {
     try {
-      return await this.prisma.credential.create({ data });
+      // Elimina propiedades undefined para evitar errores de tipo
+      const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, v]) => v !== undefined)
+      );
+      return await this.prisma.credential.create({ data: cleanData as any });
     } catch (error) {
       handlePrismaError(error, 'Credencial');
     }
