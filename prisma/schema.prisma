@@ -48,6 +48,7 @@ enum SystemType {
   erp
   crm
   tefl
+  phone
 }
 
 enum SimPlanType {
@@ -158,7 +159,6 @@ model Asset {
   brand            String?
   model            String?
   status           AssetStatus @default(available)
-  actaStatus       ActaStatus  @default(no_generada)
   branchId         Int?
   assignedPersonId Int?
   purchaseDate     DateTime?
@@ -315,6 +315,7 @@ model AssignmentHistory {
   returnCondition  Condition?
   deliveryNotes    String?
   returnNotes      String?
+  actaStatus       ActaStatus @default(no_generada)
 
   asset   Asset   @relation(fields: [assetId], references: [id])
   person  Person  @relation(fields: [personId], references: [id])

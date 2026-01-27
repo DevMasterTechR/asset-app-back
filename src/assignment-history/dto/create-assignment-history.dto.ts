@@ -5,7 +5,7 @@ import {
     IsOptional,
     IsString,
 } from 'class-validator';
-import { Condition } from '@prisma/client';
+import { Condition, ActaStatus } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateAssignmentHistoryDto {
@@ -72,4 +72,13 @@ export class CreateAssignmentHistoryDto {
     @IsOptional()
     @IsString()
     returnNotes?: string;
+
+    @ApiPropertyOptional({
+        enum: ['no_generada', 'acta_generada', 'firmada'],
+        description: 'Estado del acta de entrega',
+        default: 'no_generada',
+    })
+    @IsOptional()
+    @IsEnum(ActaStatus)
+    actaStatus?: ActaStatus;
 }

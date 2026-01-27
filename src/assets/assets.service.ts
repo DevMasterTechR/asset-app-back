@@ -68,7 +68,6 @@ export class AssetsService {
           brand: true,
           model: true,
           status: true,
-          actaStatus: true,
           branchId: true,
           assignedPersonId: true,
           purchaseDate: true,
