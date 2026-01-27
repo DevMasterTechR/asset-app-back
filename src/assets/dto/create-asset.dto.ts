@@ -14,6 +14,13 @@ export enum AssetStatus {
     maintenance = 'maintenance',
     decommissioned = 'decommissioned',
 }
+
+export enum ActaStatus {
+    no_generada = 'no_generada',
+    acta_generada = 'acta_generada',
+    firmada = 'firmada',
+}
+
 export class CreateAssetDto {
     @ApiProperty({ description: 'Código único del activo', example: 'A12345' })
     @IsString()
@@ -82,4 +89,9 @@ export class CreateAssetDto {
     })
     @IsOptional()
     attributesJson?: Record<string, any>;
+
+    @ApiPropertyOptional({ enum: ActaStatus, description: 'Estado del acta de entrega', default: 'no_generada' })
+    @IsOptional()
+    @IsEnum(ActaStatus)
+    actaStatus?: ActaStatus;
 }
