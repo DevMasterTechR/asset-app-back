@@ -81,4 +81,27 @@ export class CreateAssignmentHistoryDto {
     @IsOptional()
     @IsEnum(ActaStatus)
     actaStatus?: ActaStatus;
+
+    @ApiPropertyOptional({
+        description: 'Fecha y hora cuando se firmó el acta de entrega',
+    })
+    @IsOptional()
+    @IsDateString()
+    actaFirmadaAt?: Date;
+
+    @ApiPropertyOptional({
+        enum: ['no_generada', 'acta_generada', 'firmada'],
+        description: 'Estado del acta de recepción',
+        default: 'no_generada',
+    })
+    @IsOptional()
+    @IsEnum(ActaStatus)
+    actaRecepcionStatus?: ActaStatus;
+
+    @ApiPropertyOptional({
+        description: 'Fecha y hora cuando se firmó el acta de recepción',
+    })
+    @IsOptional()
+    @IsDateString()
+    actaRecepcionFirmadaAt?: Date;
 }

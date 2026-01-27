@@ -316,6 +316,9 @@ model AssignmentHistory {
   deliveryNotes    String?
   returnNotes      String?
   actaStatus       ActaStatus @default(no_generada)
+  actaFirmadaAt    DateTime?
+  actaRecepcionStatus ActaStatus @default(no_generada)
+  actaRecepcionFirmadaAt DateTime?
 
   asset   Asset   @relation(fields: [assetId], references: [id])
   person  Person  @relation(fields: [personId], references: [id])
