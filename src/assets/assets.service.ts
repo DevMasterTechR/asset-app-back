@@ -38,6 +38,50 @@ export class AssetsService {
     }
   }
 
+  async createBulk(quantity: number, template: CreateAssetDto) {
+    try {
+      if (quantity < 1 || quantity > 1000) {
+        throw new BadRequestException('La cantidad debe estar entre 1 y 1000');
+      }
+
+      // Log entrada para depuración
+      if (process.env.DEBUG_ASSETS_SERVICE === 'true') {
+        console.log('[AssetsService.createBulk] quantity:', quantity, 'template:', JSON.stringify(template));
+      }
+
+      // Preparar los datos base
+      const basePayload: any = { ...template };
+      const dateFields = ['purchaseDate', 'deliveryDate', 'receivedDate'];
+      for (const f of dateFields) {
+        if (basePayload[f]) {
+          const d = new Date(basePayload[f]);
+          if (!isNaN(d.getTime())) basePayload[f] = d;
+        }
+      }
+
+      // Crear un array con la cantidad solicitada de dispositivos
+      const assetsToCreate = Array.from({ length: quantity }, (_, idx) => ({
+        ...basePayload,
+        assetCode: `${basePayload.assetCode}-${String(idx + 1).padStart(3, '0')}`,
+      }));
+
+      // Usar createMany para crear todos los activos de una vez
+      const result = await this.prisma.asset.createMany({
+        data: assetsToCreate,
+        skipDuplicates: false,
+      });
+
+      return {
+        created: result.count,
+        quantity: quantity,
+        message: `Se crearon ${result.count} activos exitosamente`,
+      };
+    } catch (error) {
+      console.error('[AssetsService.createBulk] caught error:', error && error.stack ? error.stack : error);
+      handlePrismaError(error, 'Activos (creación masiva)');
+    }
+  }
+
   // Obtener activos con soporte de búsqueda y paginación
   async findAll(q?: string, page = 1, limit = 10) {
     const where: any = {};

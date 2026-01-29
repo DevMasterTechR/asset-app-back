@@ -29,6 +29,7 @@ import {
 import { AssetsService } from './assets.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
+import { BulkCreateAssetDto } from './dto/bulk-create-asset.dto';
 import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 import { Authenticated } from 'src/common/decorators/authenticated.decorator';
 
@@ -57,6 +58,22 @@ export class AssetsController {
             // Ignorar cualquier error de logging
         }
         return this.assetsService.create(dto);
+    }
+
+    @Post('bulk')
+    @AdminOnly()
+    @HttpCode(HttpStatus.CREATED)
+    @ApiOperation({ summary: 'Crear múltiples activos con las mismas características' })
+    @ApiCreatedResponse({ description: 'Activos creados exitosamente' })
+    @ApiBadRequestResponse({ description: 'Datos inválidos para crear activos' })
+    @ApiBody({ type: BulkCreateAssetDto })
+    createBulk(@Req() req: any, @Body() dto: BulkCreateAssetDto) {
+        try {
+            console.log('[DEBUG] AssetsController.createBulk req.user =', req.user);
+        } catch (e) {
+            // Ignorar cualquier error de logging
+        }
+        return this.assetsService.createBulk(dto.quantity, dto.template);
     }
 
     @Get()
