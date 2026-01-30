@@ -3,6 +3,7 @@ import {
   IsOptional,
   IsInt,
   IsDateString,
+  IsNumber,
 } from 'class-validator';
 import {
   ApiProperty,
@@ -39,6 +40,14 @@ export class CreateRj45ConnectorDto {
   @IsOptional()
   @IsString()
   type?: string;
+
+  @ApiPropertyOptional({
+    example: 12.5,
+    description: 'Precio de compra (opcional)',
+  })
+  @IsOptional()
+  @IsNumber()
+  purchasePrice?: number;
 
   @ApiPropertyOptional({
     example: '2023-10-01',

@@ -56,6 +56,14 @@ export class CreatePowerStripDto {
   capacity?: number;
 
   @ApiPropertyOptional({
+    description: 'Precio de compra del multicontacto',
+    example: 19.99,
+  })
+  @IsOptional()
+  @IsNumber()
+  purchasePrice?: number;
+
+  @ApiPropertyOptional({
     description: 'Fecha de compra (formato ISO)',
     example: '2023-05-15T00:00:00.000Z',
   })

@@ -3,6 +3,7 @@ import {
   IsString,
   IsInt,
   IsOptional,
+  IsNumber,
   MaxLength,
   IsDateString,
   IsIn
@@ -64,6 +65,16 @@ export class CreateUtpCableDto {
   @IsOptional()
   @MaxLength(50)
   color?: string;
+
+  @ApiProperty({
+    description: 'Precio de compra del cable',
+    example: 25.5,
+    required: false,
+    type: Number,
+  })
+  @IsNumber()
+  @IsOptional()
+  purchasePrice?: number;
 
   @ApiProperty({
     description: 'Fecha de compra del cable (formato ISO 8601)',

@@ -3,6 +3,7 @@ import {
   IsInt,
   IsOptional,
   IsDateString,
+  IsNumber,
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -52,6 +53,14 @@ export class CreateInkDto {
   @IsOptional()
   @MaxLength(50)
   inkType?: string;
+
+  @ApiPropertyOptional({
+    description: 'Precio de compra',
+    example: 15.5,
+  })
+  @IsNumber()
+  @IsOptional()
+  purchasePrice?: number;
 
   @ApiPropertyOptional({
     description: 'Fecha de compra en formato ISO',

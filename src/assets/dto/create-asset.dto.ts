@@ -3,6 +3,7 @@ import {
     IsEnum,
     IsInt,
     IsNotEmpty,
+    IsNumber,
     IsOptional,
     IsString,
 } from 'class-validator';
@@ -40,6 +41,11 @@ export class CreateAssetDto {
     @IsOptional()
     @IsString()
     model?: string;
+
+    @ApiPropertyOptional({ description: 'Precio de compra del activo', example: 499.99 })
+    @IsOptional()
+    @IsNumber()
+    purchasePrice?: number;
 
     @ApiPropertyOptional({ enum: AssetStatus, description: 'Estado del activo' })
     @IsOptional()

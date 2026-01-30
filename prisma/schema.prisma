@@ -158,6 +158,7 @@ model Asset {
   serialNumber     String?     @unique
   brand            String?
   model            String?
+  purchasePrice    Float?
   status           AssetStatus @default(available)
   branchId         Int?
   assignedPersonId Int?
@@ -196,6 +197,7 @@ model Ink {
   color        String
   quantity     Int      @default(0)
   inkType      String?
+  purchasePrice Float?
   purchaseDate DateTime?
   usageDate    DateTime?
   notes        String?
@@ -210,6 +212,7 @@ model UtpCable {
   material      String?
   lengthMeters  Decimal?   // Puedes usar Decimal ahora en PostgreSQL
   color         String?
+  purchasePrice Float?
   purchaseDate  DateTime?
   usageDate     DateTime?
   notes         String?
@@ -223,6 +226,7 @@ model Rj45Connector {
   quantityUnits Int      @default(0)
   material      String?
   type          String?
+  purchasePrice Float?
   purchaseDate  DateTime?
   usageDate     DateTime?
   notes         String?
@@ -238,6 +242,7 @@ model PowerStrip {
   lengthMeters Decimal?   // Cambiado de Float a Decimal (mejor precisión)
   color        String?
   capacity     Int?
+  purchasePrice Float?
   purchaseDate DateTime?
   usageDate    DateTime?
   notes        String?
