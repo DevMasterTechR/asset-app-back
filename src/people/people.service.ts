@@ -29,7 +29,7 @@ export class PeopleService {
   }
 
   // Obtener todas las personas con soporte de búsqueda y paginación
-  async findAll(q?: string, page = 1, limit = 10) {
+  async findAll(q?: string, page = 1, limit = 999999) {
     const where: any = {};
 
     if (q && q.trim().length > 0) {
@@ -42,7 +42,7 @@ export class PeopleService {
       ];
     }
 
-    const take = Number(limit) > 0 ? Number(limit) : 10;
+    const take = Number(limit) > 0 ? Number(limit) : 999999;
     const skip = (Number(page) > 1 ? Number(page) - 1 : 0) * take;
 
     const [data, total] = await Promise.all([
