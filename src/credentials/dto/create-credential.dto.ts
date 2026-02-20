@@ -54,9 +54,9 @@ export class CreateCredentialDto {
   @IsOptional()
   @ValidateIf((o) => o.system === SystemType.tefl)
   @IsNotEmpty({ message: 'El número telefónico es obligatorio para TEFL' })
-  @Matches(/^(?:\+?593|0)[2-9][0-9]{7,8}$/, {
+  @Matches(/^(?:\+?593|0)[2-9][0-9]{7,8}(?:\s*\/\s*(?:\+?593|0)[2-9][0-9]{7,8})*$/, {
     message:
-      'Formato de teléfono inválido. Usa formatos válidos ecuatorianos (ej: 0962598491, +593962598491, 022345678)',
+      'Formato de teléfono inválido. Usa formatos válidos ecuatorianos (ej: 0962598491, +593962598491, 022345678). Puedes agregar varios separados por " / "',
   })
   phone?: string;
 
