@@ -27,6 +27,7 @@ import { RequestsModule } from './requests/requests.module';
 import { HubModule } from './hub/hub.module';
 import { SupportModule } from './support/support.module';
 import { NetworkAdapterModule } from './network-adapter/network-adapter.module';
+import { UsbModule } from './usb/usb.module';
 
 @Module({
     imports: [
@@ -54,6 +55,7 @@ import { NetworkAdapterModule } from './network-adapter/network-adapter.module';
         HubModule,
         SupportModule,
         NetworkAdapterModule,
+        UsbModule,
     ],
     controllers: [AppController],
     providers: [AppService],
