@@ -6,14 +6,19 @@ import {
 import { Prisma } from '@prisma/client';
 
 export function handlePrismaError(error: any, entity = 'Recurso', id?: number): never {
+  // Log para debugging
+  console.error('[handlePrismaError] Error:', error?.code, error?.message);
+
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     switch (error.code) {
       case 'P2025':
         throw new NotFoundException(`${entity} con ID ${id} no encontrado`);
       case 'P2002':
         throw new BadRequestException(`${entity} duplicado`);
+      case 'P2003':
+        throw new BadRequestException(`Error de referencia: el registro relacionado no existe`);
       default:
-        throw new BadRequestException('Error en la solicitud');
+        throw new BadRequestException(`Error en la solicitud (código: ${error.code})`);
     }
   }
 
