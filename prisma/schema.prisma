@@ -356,7 +356,7 @@ model Credential {
   username  String
   password  String
   system    SystemType
-  phone     String?    @db.VarChar(20)
+  phone     String?    @db.VarChar(200)
   notes     String?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
