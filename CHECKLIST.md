@@ -2,7 +2,7 @@
 
 ## ✅ Lo Que se Implementó
 
-### Funcionalidad Principal
+
 - [x] Servicio de email (`EmailService`) creado y funcional
 - [x] Integración con módulo de solicitudes
 - [x] Envío automático de emails cuando se crea una solicitud
