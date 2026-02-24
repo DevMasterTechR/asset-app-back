@@ -5,6 +5,7 @@ import {
     IsOptional,
     IsString,
     MinLength,
+    IsArray,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -89,4 +90,22 @@ export class CreatePersonDto {
     @IsOptional()
     @IsInt()
     branchId?: number;
+
+    @ApiPropertyOptional({
+        description: 'Observación o notas adicionales sobre la persona',
+        example: 'Trabaja en horario nocturno',
+    })
+    @IsOptional()
+    @IsString()
+    observation?: string;
+
+    @ApiPropertyOptional({
+        description: 'IDs de activos asignados a T.I. con esta persona',
+        example: [1, 2, 3],
+        type: [Number],
+    })
+    @IsOptional()
+    @IsArray()
+    @IsInt({ each: true })
+    tiAssetIds?: number[];
 }

@@ -17,6 +17,7 @@ enum AssetStatus {
   loaned
   maintenance
   decommissioned
+  ti
 }
 
 enum PersonStatus {
@@ -136,6 +137,8 @@ model Person {
   lastActivityAt   DateTime?
 
   mustChangePassword Boolean @default(false)
+  observation        String?
+  tiAssetIds         Int[]      @default([])
 
 
   department Department? @relation(fields: [departmentId], references: [id])
