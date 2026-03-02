@@ -9,6 +9,8 @@
     "build": "nest build && npx prisma generate",
     "postinstall": "npx prisma generate",
     "migrate:deploy": "npx prisma migrate deploy",
+    "backup:local": "powershell -ExecutionPolicy Bypass -File ./scripts/backup-db.ps1",
+    "restore:local": "powershell -ExecutionPolicy Bypass -File ./scripts/restore-db.ps1",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "node dist/src/main.js",
     "start:dev": "nest start",
