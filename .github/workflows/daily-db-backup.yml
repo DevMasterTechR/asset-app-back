@@ -12,11 +12,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install PostgreSQL client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
-
       - name: Create backup folder
         run: mkdir -p backups
 
@@ -27,12 +22,15 @@ jobs:
           test -n "$SUPABASE_DIRECT_URL"
           DATE="$(date +'%Y-%m-%d_%H-%M-%S')"
           FILE="backups/asset-app-back-${DATE}.dump"
-          pg_dump \
-            --dbname="$SUPABASE_DIRECT_URL" \
-            --format=custom \
-            --no-owner \
-            --no-privileges \
-            --file="$FILE"
+          docker run --rm \
+            -v "${PWD}/backups:/backups" \
+            postgres:17 \
+            pg_dump \
+              --dbname="$SUPABASE_DIRECT_URL" \
+              --format=custom \
+              --no-owner \
+              --no-privileges \
+              --file="/backups/asset-app-back-${DATE}.dump"
           echo "BACKUP_FILE=$FILE" >> "$GITHUB_ENV"
 
       - name: Upload artifact
