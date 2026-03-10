@@ -54,6 +54,23 @@ export class AssignmentHistoryService {
       ]);
 
       // Devolver tanto el assignmentHistory creado (con relaciones) como el asset actualizado
+
+      // Al agregar un nuevo equipo a una persona, resetear el acta de todas sus
+      // demás asignaciones activas para que el botón de Acta de Entrega se habilite.
+      await this.prisma.assignmentHistory.updateMany({
+        where: {
+          personId: data.personId,
+          returnDate: null,
+          NOT: { id: result[0].id },
+        },
+        data: {
+          actaStatus: 'no_generada',
+          actaFirmadaAt: null,
+          actaRecepcionStatus: 'no_generada',
+          actaRecepcionFirmadaAt: null,
+        },
+      });
+
       return { assignment: result[0], asset: result[1] };
     } catch (error) {
       handlePrismaError(error, 'Historial');
@@ -114,6 +131,22 @@ export class AssignmentHistoryService {
         ]);
 
         // Devolver tanto el historial actualizado como el asset actualizado
+
+        // Al quitar un equipo de una persona, resetear el acta de todas sus
+        // asignaciones activas restantes para que el botón de Acta de Entrega se habilite.
+        await this.prisma.assignmentHistory.updateMany({
+          where: {
+            personId: existing.personId,
+            returnDate: null,
+          },
+          data: {
+            actaStatus: 'no_generada',
+            actaFirmadaAt: null,
+            actaRecepcionStatus: 'no_generada',
+            actaRecepcionFirmadaAt: null,
+          },
+        });
+
         return { assignment: txResult[0], asset: txResult[1] };
       }
 
