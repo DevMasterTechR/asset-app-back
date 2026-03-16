@@ -96,6 +96,22 @@ export class AssetsController {
         return this.assetsService.findAll(q, pageNum ?? 1, limitNum ?? 10);
     }
 
+    @Get('grouped/by-person')
+    @Authenticated()
+    @ApiOperation({ summary: 'Listado de equipos agrupados por persona' })
+    @ApiOkResponse({ description: 'Agrupación persona → activos' })
+    getAssetsGroupedByPerson() {
+        return this.assetsService.getAssetsGroupedByPerson();
+    }
+
+    @Get('by-person')
+    @Authenticated()
+    @ApiOperation({ summary: 'Alias legado para listado de equipos agrupados por persona' })
+    @ApiOkResponse({ description: 'Agrupación persona → activos' })
+    getAssetsGroupedByPersonLegacy() {
+        return this.assetsService.getAssetsGroupedByPerson();
+    }
+
     @Get(':id')
     @AdminOnly()
     @ApiOperation({ summary: 'Obtener un activo por ID (admin)' })
@@ -129,13 +145,5 @@ export class AssetsController {
     @ApiBadRequestResponse({ description: 'ID inválido' })
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.assetsService.remove(id);
-    }
-
-    @Get('by-person')
-    @Authenticated()
-    @ApiOperation({ summary: 'Listado de equipos agrupados por persona' })
-    @ApiOkResponse({ description: 'Agrupación persona → activos' })
-    getAssetsGroupedByPerson() {
-        return this.assetsService.getAssetsGroupedByPerson();
     }
 }
