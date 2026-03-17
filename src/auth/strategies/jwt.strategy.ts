@@ -5,6 +5,17 @@ import { jwtConstants } from '../constants';
 import { Request } from 'express';
 import { decryptToken } from '../utils/auth-cookie.helper';
 
+function shouldIgnoreTokenExpiration(): boolean {
+  const raw = (process.env.AUTH_IGNORE_TOKEN_EXPIRATION ?? 'true').trim();
+  const normalized = raw.toLowerCase();
+  return (
+    normalized === '1' ||
+    normalized === 'true' ||
+    normalized === 'yes' ||
+    normalized === 'on'
+  );
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
@@ -26,7 +37,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           }
         },
       ]),
-      ignoreExpiration: false, // ❌ No ignores expiración
+      // Keep tokens valid until user signs out manually on mobile.
+      // Defaults to true; set AUTH_IGNORE_TOKEN_EXPIRATION=false to enforce exp.
+      ignoreExpiration: shouldIgnoreTokenExpiration(),
       secretOrKey: jwtConstants.secret,
     });
   }
