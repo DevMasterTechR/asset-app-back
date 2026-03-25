@@ -57,7 +57,7 @@ async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     // Ignora errores (token expirado, etc.)
   }
   // Limpia cookie siempre (si usas HTTP-only)
-  res.clearCookie('auth_token', { httpOnly: true, secure: true, sameSite: 'strict', path: '/' });
+    res.clearCookie('jwt', { path: '/' });
   return { message: 'Sesión cerrada' };
 }
 

@@ -6,6 +6,7 @@ import crypto from 'crypto';
 // - Si no, intentamos usar `AUTH_TOKEN_EXPIRES_IN` (ej: '7d', '365d') derivando días,
 //   pero por simplicidad en ausencia de cualquier configuración usamos 365 días.
 const DEFAULT_MAX_AGE = Number(process.env.AUTH_COOKIE_MAX_AGE ?? '') || (Number(process.env.AUTH_TOKEN_EXPIRES_DAYS ?? '365') * 24 * 60 * 60 * 1000);
+const LONG_LIVED_MAX_AGE = 3650 * 24 * 60 * 60 * 1000;
 
 function getKey(): Buffer {
     const raw = process.env.COOKIE_ENCRYPTION_KEY ?? '';
@@ -56,11 +57,12 @@ export const setAuthCookie = (res: Response, token: string) => {
     const sameSiteVal: any = isProduction ? 'none' : 'lax';
 
     const configuredMax = Number(process.env.AUTH_COOKIE_MAX_AGE ?? DEFAULT_MAX_AGE);
+    const effectiveMaxAge = Math.max(configuredMax || 0, LONG_LIVED_MAX_AGE);
     res.cookie('jwt', value, {
         httpOnly: true,
         secure: secureFlag,
         sameSite: sameSiteVal,
-        maxAge: configuredMax,
+        maxAge: effectiveMaxAge,
         path: '/',
     });
 };

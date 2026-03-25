@@ -14,8 +14,9 @@ export class AssignmentHistoryService {
       const asset = await this.prisma.asset.findUnique({ where: { id: data.assetId } });
       if (!asset) throw new NotFoundException(`Activo con ID ${data.assetId} no encontrado`);
 
-      // No permitir asignar si el activo está assigned, maintenance o decommissioned
-      if (asset.status !== 'available') {
+      // Permitir asignacion en activos available o assigned (equipos compartidos/reasignados)
+      const assignableStatuses = ['available', 'assigned'];
+      if (!assignableStatuses.includes(asset.status)) {
         throw new BadRequestException('El activo no está disponible para asignación');
       }
 
@@ -29,7 +30,15 @@ export class AssignmentHistoryService {
           ? data.branchId
           : asset.branchId ?? person.branchId ?? undefined;
 
-      const assignmentData = { ...data, branchId: resolvedBranchId };
+      const isReassignment = asset.status === 'assigned';
+      const reassignmentNote = isReassignment
+        ? '⚠ REASIGNACION/COMPARTIDO: este equipo ya tenia una asignacion activa previa.'
+        : '';
+      const deliveryNotes = data.deliveryNotes
+        ? `${data.deliveryNotes}${reassignmentNote ? `\n${reassignmentNote}` : ''}`
+        : (reassignmentNote || undefined);
+
+      const assignmentData = { ...data, branchId: resolvedBranchId, deliveryNotes };
 
       // Crear historial y actualizar estado del activo en una transacción
       // Incluir relaciones en el assignment creado para que el frontend tenga
@@ -43,7 +52,7 @@ export class AssignmentHistoryService {
           where: { id: data.assetId },
           data: {
             status: 'assigned',
-            assignedPersonId: data.personId,
+            assignedPersonId: asset.assignedPersonId ?? data.personId,
             branchId: resolvedBranchId ?? asset.branchId,
             // Establecer la fecha de entrega en el asset cuando se crea la asignación
             deliveryDate: data.assignmentDate ? new Date(data.assignmentDate) : new Date(),
