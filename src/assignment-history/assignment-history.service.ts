@@ -8,6 +8,13 @@ import { handlePrismaError } from 'src/common/utils/prisma-error.util';
 export class AssignmentHistoryService {
   constructor(private prisma: PrismaService) {}
 
+  private normalizeBranchId(value: unknown): number | undefined {
+    if (value === undefined || value === null || value === '') return undefined;
+    const num = Number(value);
+    if (!Number.isFinite(num) || num <= 0) return undefined;
+    return num;
+  }
+
   async create(data: CreateAssignmentHistoryDto) {
     try {
       // Verificar que el activo exista y esté disponible
@@ -25,9 +32,10 @@ export class AssignmentHistoryService {
       if (!person) throw new NotFoundException(`Persona con ID ${data.personId} no encontrada`);
 
       // Definir sucursal priorizando payload -> asset -> persona
+      const incomingBranchId = this.normalizeBranchId(data.branchId);
       const resolvedBranchId =
-        data.branchId !== undefined && data.branchId !== null
-          ? data.branchId
+        incomingBranchId !== undefined
+          ? incomingBranchId
           : asset.branchId ?? person.branchId ?? undefined;
 
       const isReassignment = asset.status === 'assigned';
@@ -175,9 +183,10 @@ export class AssignmentHistoryService {
       }
 
       // Determinar sucursal final
+      const incomingBranchId = this.normalizeBranchId(data.branchId);
       const resolvedBranchId =
-        data.branchId !== undefined && data.branchId !== null
-          ? data.branchId
+        incomingBranchId !== undefined
+          ? incomingBranchId
           : existing.branchId ?? existing.asset?.branchId ?? targetPerson.branchId ?? undefined;
 
       const txResult = await this.prisma.$transaction([
