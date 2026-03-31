@@ -126,6 +126,13 @@ export class AssetsService {
               id: true,
               name: true
             }
+          },
+          assignedPerson: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true
+            }
           }
         }
       }),
