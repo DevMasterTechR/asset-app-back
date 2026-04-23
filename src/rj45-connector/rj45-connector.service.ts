@@ -13,18 +13,22 @@ export class Rj45ConnectorService {
 
   async create(data: CreateRj45ConnectorDto) {
     try {
-      return await this.prisma.rj45Connector.create({ data });
+      return await (this.prisma as any).rj45Connector.create({ data });
     } catch (error) {
       handlePrismaError(error, 'Conector RJ45');
     }
   }
 
   async findAll() {
-    return this.prisma.rj45Connector.findMany();
+    try {
+      return await (this.prisma as any).rj45Connector.findMany();
+    } catch (error) {
+      handlePrismaError(error, 'Conector RJ45');
+    }
   }
 
   async findOne(id: number) {
-    const connector = await this.prisma.rj45Connector.findUnique({ where: { id } });
+    const connector = await (this.prisma as any).rj45Connector.findUnique({ where: { id } });
     if (!connector) {
       throw new NotFoundException(`Conector RJ45 con ID ${id} no encontrado`);
     }
@@ -33,7 +37,7 @@ export class Rj45ConnectorService {
 
   async update(id: number, data: UpdateRj45ConnectorDto) {
     try {
-      return await this.prisma.rj45Connector.update({ where: { id }, data });
+      return await (this.prisma as any).rj45Connector.update({ where: { id }, data });
     } catch (error) {
       handlePrismaError(error, 'Conector RJ45', id);
     }
@@ -41,7 +45,7 @@ export class Rj45ConnectorService {
 
   async remove(id: number) {
     try {
-      return await this.prisma.rj45Connector.delete({ where: { id } });
+      return await (this.prisma as any).rj45Connector.delete({ where: { id } });
     } catch (error) {
       handlePrismaError(error, 'Conector RJ45', id);
     }

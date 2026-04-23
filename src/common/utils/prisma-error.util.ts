@@ -17,6 +17,14 @@ export function handlePrismaError(error: any, entity = 'Recurso', id?: number): 
         throw new BadRequestException(`${entity} duplicado`);
       case 'P2003':
         throw new BadRequestException(`Error de referencia: el registro relacionado no existe`);
+      case 'P2021':
+        throw new InternalServerErrorException(
+          `La tabla de ${entity} no existe en la base de datos. Verifica migraciones en producción.`,
+        );
+      case 'P2022':
+        throw new InternalServerErrorException(
+          `Faltan columnas de ${entity} en la base de datos. Verifica migraciones en producción.`,
+        );
       default:
         throw new BadRequestException(`Error en la solicitud (código: ${error.code})`);
     }

@@ -13,25 +13,29 @@ export class UtpCableService {
 
   async create(dto: CreateUtpCableDto) {
     try {
-      return await this.prisma.utpCable.create({ data: dto });
+      return await (this.prisma as any).utpCable.create({ data: dto });
     } catch (error) {
       handlePrismaError(error, 'Cable');
     }
   }
 
   async findAll() {
-    return this.prisma.utpCable.findMany();
+    try {
+      return await (this.prisma as any).utpCable.findMany();
+    } catch (error) {
+      handlePrismaError(error, 'Cable UTP');
+    }
   }
 
   async findOne(id: number) {
-    const item = await this.prisma.utpCable.findUnique({ where: { id } });
+    const item = await (this.prisma as any).utpCable.findUnique({ where: { id } });
     if (!item) throw new NotFoundException(`Cable con ID ${id} no encontrado`);
     return item;
   }
 
   async update(id: number, dto: UpdateUtpCableDto) {
     try {
-      return await this.prisma.utpCable.update({ where: { id }, data: dto });
+      return await (this.prisma as any).utpCable.update({ where: { id }, data: dto });
     } catch (error) {
       handlePrismaError(error, 'Cable', id);
     }
@@ -39,7 +43,7 @@ export class UtpCableService {
 
   async remove(id: number) {
     try {
-      return await this.prisma.utpCable.delete({ where: { id } });
+      return await (this.prisma as any).utpCable.delete({ where: { id } });
     } catch (error) {
       handlePrismaError(error, 'Cable', id);
     }
