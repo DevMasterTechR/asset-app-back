@@ -216,24 +216,58 @@ export class AssignmentHistoryService {
       const existing = await this.prisma.assignmentHistory.findUnique({ where: { id } });
       if (!existing) throw new NotFoundException(`Historial con ID ${id} no encontrado`);
 
-      // Eliminar el historial y actualizar el asset relacionado en una transacción
-      const tx = await this.prisma.$transaction([
-        this.prisma.assignmentHistory.delete({ where: { id } }),
+      // Buscar asignaciones relacionadas que fueron creadas automáticamente
+      // junto con este activo (periféricos). El frontend crea estas entradas
+      // con un texto en `deliveryNotes` como "Asignación automática junto con ..."
+      const relatedAuto = await this.prisma.assignmentHistory.findMany({
+        where: {
+          personId: existing.personId,
+          returnDate: null,
+          assignmentDate: existing.assignmentDate,
+          NOT: { id },
+          deliveryNotes: { contains: 'junto con' },
+        },
+      });
+
+      // Construir la transacción: eliminar el historial principal, actualizar
+      // su asset y, para cada periférico relacionado, eliminar su historial
+      // y actualizar su asset a disponible.
+      const txOperations: any[] = [];
+
+      // eliminar historial principal
+      txOperations.push(this.prisma.assignmentHistory.delete({ where: { id } }));
+      // actualizar asset principal
+      txOperations.push(
         this.prisma.asset.update({
           where: { id: existing.assetId },
           data: {
-            // Al eliminar la asignación, dejar el activo en estado disponible
             status: 'available',
-            // Quitar la referencia a la persona asignada
             assignedPersonId: null,
-            // Limpiar fechas relacionadas con la asignación
             deliveryDate: null,
             receivedDate: null,
           },
         }),
-      ]);
+      );
 
-      // Devolver el historial eliminado (tx[0]) y el asset actualizado (tx[1])
+      // agregar operaciones para periféricos
+      for (const r of relatedAuto) {
+        txOperations.push(this.prisma.assignmentHistory.delete({ where: { id: r.id } }));
+        txOperations.push(
+          this.prisma.asset.update({
+            where: { id: r.assetId },
+            data: {
+              status: 'available',
+              assignedPersonId: null,
+              deliveryDate: null,
+              receivedDate: null,
+            },
+          }),
+        );
+      }
+
+      const tx = await this.prisma.$transaction(txOperations);
+
+      // tx[0] => historial principal eliminado, tx[1] => asset principal actualizado
       return { assignment: tx[0], asset: tx[1] };
     } catch (error) {
       handlePrismaError(error, 'Historial', id);
