@@ -3,7 +3,7 @@ services:
     name: asset-app-back
     runtime: node
     buildCommand: pnpm install --frozen-lockfile --prod=false && pnpm run build && pnpm run migrate:deploy
-    startCommand: node dist/src/main.js
+    startCommand: pnpm install --frozen-lockfile --prod && node dist/src/main.js
     envVars:
       - key: NODE_ENV
         value: production
