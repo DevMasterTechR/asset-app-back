@@ -25,6 +25,11 @@ export class CreateAssignmentHistoryDto {
     @IsInt()
     branchId?: number;
 
+    @ApiPropertyOptional({ description: 'ID de la asignación padre (para periféricos automáticos)', example: 123 })
+    @IsOptional()
+    @IsInt()
+    parentAssignmentId?: number;
+
     @ApiPropertyOptional({
         description: 'Fecha de asignación',
         example: '2023-09-15T14:48:00.000Z',

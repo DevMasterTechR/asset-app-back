@@ -217,15 +217,11 @@ export class AssignmentHistoryService {
       if (!existing) throw new NotFoundException(`Historial con ID ${id} no encontrado`);
 
       // Buscar asignaciones relacionadas que fueron creadas automáticamente
-      // junto con este activo (periféricos). El frontend crea estas entradas
-      // con un texto en `deliveryNotes` como "Asignación automática junto con ..."
+      // (asignaciones automáticas creadas junto con este activo)
       const relatedAuto = await this.prisma.assignmentHistory.findMany({
         where: {
-          personId: existing.personId,
+          parentAssignmentId: id,
           returnDate: null,
-          assignmentDate: existing.assignmentDate,
-          NOT: { id },
-          deliveryNotes: { contains: 'junto con' },
         },
       });
 

@@ -318,6 +318,7 @@ model AssignmentHistory {
   assetId          Int
   personId         Int
   branchId         Int?
+  parentAssignmentId Int?
   assignmentDate   DateTime   @default(now())
   returnDate       DateTime?
   deliveryCondition Condition @default(good)
@@ -332,6 +333,8 @@ model AssignmentHistory {
   asset   Asset   @relation(fields: [assetId], references: [id])
   person  Person  @relation(fields: [personId], references: [id])
   branch  Branch? @relation(fields: [branchId], references: [id])
+  parentAssignment AssignmentHistory? @relation("ParentChild", fields: [parentAssignmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  childAssignments AssignmentHistory[] @relation("ParentChild")
 }
 
 model Loan {
