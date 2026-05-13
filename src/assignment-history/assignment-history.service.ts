@@ -94,30 +94,42 @@ export class AssignmentHistoryService {
     }
   }
 
-  findAll() {
-    return this.prisma.assignmentHistory.findMany({
-      include: { asset: true, person: true, branch: true },
-      orderBy: { assignmentDate: 'desc' },
-    });
+  async findAll() {
+    try {
+      return await this.prisma.assignmentHistory.findMany({
+        include: { asset: true, person: true, branch: true },
+        orderBy: { assignmentDate: 'desc' },
+      });
+    } catch (error) {
+      handlePrismaError(error, 'Historial de Asignación');
+    }
   }
 
   async findByPersonId(personId: number) {
-    return this.prisma.assignmentHistory.findMany({
-      where: { personId },
-      include: { asset: true, person: true, branch: true },
-      orderBy: { assignmentDate: 'desc' },
-    });
+    try {
+      return await this.prisma.assignmentHistory.findMany({
+        where: { personId },
+        include: { asset: true, person: true, branch: true },
+        orderBy: { assignmentDate: 'desc' },
+      });
+    } catch (error) {
+      handlePrismaError(error, 'Historial de Asignación');
+    }
   }
 
   async findOne(id: number) {
-    const record = await this.prisma.assignmentHistory.findUnique({
-      where: { id },
-      include: { asset: true, person: true, branch: true },
-    });
-    if (!record) {
-      throw new NotFoundException(`Historial con ID ${id} no encontrado`);
+    try {
+      const record = await this.prisma.assignmentHistory.findUnique({
+        where: { id },
+        include: { asset: true, person: true, branch: true },
+      });
+      if (!record) {
+        throw new NotFoundException(`Historial con ID ${id} no encontrado`);
+      }
+      return record;
+    } catch (error) {
+      handlePrismaError(error, 'Historial de Asignación', id);
     }
-    return record;
   }
 
   async update(id: number, data: UpdateAssignmentHistoryDto) {

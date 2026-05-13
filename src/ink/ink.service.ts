@@ -13,7 +13,7 @@ export class InkService {
 
   async create(dto: CreateInkDto) {
     try {
-      return await (this.prisma as any).ink.create({ data: dto });
+      return await this.prisma.ink.create({ data: dto });
     } catch (error) {
       handlePrismaError(error, 'Tinta');
     }
@@ -21,21 +21,25 @@ export class InkService {
 
   async findAll() {
     try {
-      return await (this.prisma as any).ink.findMany();
+      return await this.prisma.ink.findMany();
     } catch (error) {
       handlePrismaError(error, 'Tinta');
     }
   }
 
   async findOne(id: number) {
-    const ink = await (this.prisma as any).ink.findUnique({ where: { id } });
-    if (!ink) throw new NotFoundException(`Tinta con ID ${id} no encontrada`);
-    return ink;
+    try {
+      const ink = await this.prisma.ink.findUnique({ where: { id } });
+      if (!ink) throw new NotFoundException(`Tinta con ID ${id} no encontrada`);
+      return ink;
+    } catch (error) {
+      handlePrismaError(error, 'Tinta', id);
+    }
   }
 
   async update(id: number, dto: UpdateInkDto) {
     try {
-      return await (this.prisma as any).ink.update({ where: { id }, data: dto });
+      return await this.prisma.ink.update({ where: { id }, data: dto });
     } catch (error) {
       handlePrismaError(error, 'Tinta', id);
     }
@@ -43,7 +47,7 @@ export class InkService {
 
   async remove(id: number) {
     try {
-      return await (this.prisma as any).ink.delete({ where: { id } });
+      return await this.prisma.ink.delete({ where: { id } });
     } catch (error) {
       handlePrismaError(error, 'Tinta', id);
     }

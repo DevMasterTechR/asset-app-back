@@ -13,7 +13,7 @@ export class UtpCableService {
 
   async create(dto: CreateUtpCableDto) {
     try {
-      return await (this.prisma as any).utpCable.create({ data: dto });
+      return await this.prisma.utpCable.create({ data: dto });
     } catch (error) {
       handlePrismaError(error, 'Cable');
     }
@@ -21,21 +21,25 @@ export class UtpCableService {
 
   async findAll() {
     try {
-      return await (this.prisma as any).utpCable.findMany();
+      return await this.prisma.utpCable.findMany();
     } catch (error) {
       handlePrismaError(error, 'Cable UTP');
     }
   }
 
   async findOne(id: number) {
-    const item = await (this.prisma as any).utpCable.findUnique({ where: { id } });
-    if (!item) throw new NotFoundException(`Cable con ID ${id} no encontrado`);
-    return item;
+    try {
+      const item = await this.prisma.utpCable.findUnique({ where: { id } });
+      if (!item) throw new NotFoundException(`Cable con ID ${id} no encontrado`);
+      return item;
+    } catch (error) {
+      handlePrismaError(error, 'Cable', id);
+    }
   }
 
   async update(id: number, dto: UpdateUtpCableDto) {
     try {
-      return await (this.prisma as any).utpCable.update({ where: { id }, data: dto });
+      return await this.prisma.utpCable.update({ where: { id }, data: dto });
     } catch (error) {
       handlePrismaError(error, 'Cable', id);
     }
@@ -43,7 +47,7 @@ export class UtpCableService {
 
   async remove(id: number) {
     try {
-      return await (this.prisma as any).utpCable.delete({ where: { id } });
+      return await this.prisma.utpCable.delete({ where: { id } });
     } catch (error) {
       handlePrismaError(error, 'Cable', id);
     }

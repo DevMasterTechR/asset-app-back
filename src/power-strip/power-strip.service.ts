@@ -13,7 +13,7 @@ export class PowerStripService {
 
   async create(data: CreatePowerStripDto) {
     try {
-      return await (this.prisma as any).powerStrip.create({ data });
+      return await this.prisma.powerStrip.create({ data });
     } catch (error) {
       handlePrismaError(error, 'Regleta');
     }
@@ -21,21 +21,25 @@ export class PowerStripService {
 
   async findAll() {
     try {
-      return await (this.prisma as any).powerStrip.findMany();
+      return await this.prisma.powerStrip.findMany();
     } catch (error) {
       handlePrismaError(error, 'Regleta');
     }
   }
 
   async findOne(id: number) {
-    const item = await (this.prisma as any).powerStrip.findUnique({ where: { id } });
-    if (!item) throw new NotFoundException(`Regleta con ID ${id} no encontrada`);
-    return item;
+    try {
+      const item = await this.prisma.powerStrip.findUnique({ where: { id } });
+      if (!item) throw new NotFoundException(`Regleta con ID ${id} no encontrada`);
+      return item;
+    } catch (error) {
+      handlePrismaError(error, 'Regleta', id);
+    }
   }
 
   async update(id: number, data: UpdatePowerStripDto) {
     try {
-      return await (this.prisma as any).powerStrip.update({ where: { id }, data });
+      return await this.prisma.powerStrip.update({ where: { id }, data });
     } catch (error) {
       handlePrismaError(error, 'Regleta', id);
     }
@@ -43,7 +47,7 @@ export class PowerStripService {
 
   async remove(id: number) {
     try {
-      return await (this.prisma as any).powerStrip.delete({ where: { id } });
+      return await this.prisma.powerStrip.delete({ where: { id } });
     } catch (error) {
       handlePrismaError(error, 'Regleta', id);
     }
