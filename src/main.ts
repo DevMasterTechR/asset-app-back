@@ -35,15 +35,27 @@ async function bootstrap() {
   // como /auth/session devuelvan contenido fresco en cada petición.
   app.set('etag', false);
 
+  // Detrás de Nginx (VPS): confiar en X-Forwarded-* para que Express
+  // reconozca el esquema https y la cookie jwt se emita como Secure.
+  app.set('trust proxy', 1);
+
   // 🔒 Middleware y config
-  app.enableCors({
-      origin: [
+  // Orígenes permitidos: se pueden sobreescribir con CORS_ORIGINS
+  // (lista separada por comas) sin recompilar.
+  const defaultOrigins = [
     'http://192.168.50.95:8080',
     'http://localhost:8080',
     'http://localhost:5173',
     'https://asset-app-front.vercel.app',
-    'https://asset-app-front-ew98.vercel.app'
-  ],
+    'https://asset-app-front-ew98.vercel.app',
+  ];
+  const envOrigins = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+  app.enableCors({
+    origin: envOrigins.length ? envOrigins : defaultOrigins,
     credentials: true,
   });
   app.use(cookieParser());

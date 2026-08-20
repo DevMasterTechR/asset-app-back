@@ -1,0 +1,8 @@
+# Los scripts de despliegue SIEMPRE con finales de línea LF:
+# con CRLF, Linux falla con "bad interpreter: /bin/sh^M".
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+docker-compose.yml text eol=lf
+*.yml           text eol=lf
+nginx/*.conf    text eol=lf
+.env.production.example text eol=lf
