@@ -216,39 +216,52 @@ docker compose up -d
 
 ## 6. Nginx + certificado HTTPS
 
+> **Si el VPS ya sirve otros sitios con Nginx** (comprueba con
+> `ls /etc/nginx/sites-enabled/`), usa este flujo: empieza con un bloque solo
+> HTTP y deja que `certbot --nginx` añada el HTTPS. Así nunca queda una config
+> con rutas de certificado inexistentes, que haría fallar `nginx -t` y tumbaría
+> **todos** los sitios en el siguiente reinicio.
+
 ```bash
-sudo cp nginx/asset-app-back.conf /etc/nginx/sites-available/asset-app-back
-sudo sed -i 's/api\.tudominio\.com/TU_DOMINIO_REAL/g' /etc/nginx/sites-available/asset-app-back
-sudo ln -sf /etc/nginx/sites-available/asset-app-back /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
+cd /srv/asset-app-back
+DOMAIN=gestor.techresources360.tech        # ← tu dominio real
+
+apt install -y nginx certbot python3-certbot-nginx
+ufw allow OpenSSH && ufw allow 'Nginx Full' && ufw --force enable
+
+# 1) bloque HTTP (proxy al contenedor)
+sed "s/DOMINIO_AQUI/$DOMAIN/g" nginx/asset-app-back-http.conf \
+  > /etc/nginx/sites-available/asset-app-back
+ln -sf /etc/nginx/sites-available/asset-app-back /etc/nginx/sites-enabled/
+nginx -t && systemctl reload nginx
+
+# 2) prueba por HTTP antes del certificado
+curl -s -H "Host: $DOMAIN" http://127.0.0.1/health     # → {"status":"ok",...}
+
+# 3) certificado + bloque 443 + redirección, todo automático
+certbot --nginx -d $DOMAIN --agree-tos -m tu@correo.com --redirect -n
+nginx -t && systemctl reload nginx
+
+curl -s https://$DOMAIN/health
 ```
 
-El archivo ya referencia las rutas de los certificados, que aún no existen, así que primero
-se emite el certificado con Certbot (usa el modo `--nginx`, que ajusta y recarga solo):
+**Con Cloudflare delante**: pon el registro en *DNS only* (nube gris) mientras
+emites el certificado, si no la validación puede fallar. Después puedes volver a
+activar el proxy (nube naranja) y dejar el modo SSL/TLS en **Full (strict)**, que
+ya es válido porque el origen tiene certificado de Let's Encrypt.
+
+Renovación automática (Certbot instala el timer solo):
 
 ```bash
-sudo apt install -y certbot python3-certbot-nginx
-
-# Comenta temporalmente el bloque 443 para que Nginx pueda arrancar sin certificados:
-sudo certbot certonly --webroot -w /var/www/html -d TU_DOMINIO_REAL --agree-tos -m tu@correo.com -n
-sudo nginx -t && sudo systemctl reload nginx
+systemctl status certbot.timer
+certbot renew --dry-run
 ```
 
-> Si `nginx -t` falla por certificados inexistentes antes de emitirlos: deja habilitado
-> solo el bloque `listen 80` (comenta el bloque `server` de 443), recarga, emite el
-> certificado con el comando de arriba, descomenta el bloque 443 y vuelve a recargar.
-
-Renovación automática (Certbot instala el timer solo). Verifica:
+Si `nginx -t` falla en cualquier punto, **no recargues**: quita el enlace y
+diagnostica con calma, así los otros sitios siguen intactos.
 
 ```bash
-sudo systemctl status certbot.timer
-sudo certbot renew --dry-run
-```
-
-Prueba final desde tu máquina:
-
-```bash
-curl -s https://TU_DOMINIO_REAL/health
+rm -f /etc/nginx/sites-enabled/asset-app-back && nginx -t
 ```
 
 ---
