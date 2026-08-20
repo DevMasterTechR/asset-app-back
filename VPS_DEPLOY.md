@@ -96,15 +96,27 @@ El puerto 3000 **no** se abre: el contenedor publica solo en `127.0.0.1`.
 
 ## 3. Clonar el proyecto
 
+El VPS ya tiene la clave SSH de GitHub, así que se usa la URL SSH (no la HTTPS: esa pediría
+usuario y token en cada `git pull`).
+
 ```bash
+# comprobar que la clave funciona (debe responder "Hi <usuario>! You've successfully authenticated")
+ssh -T git@github.com
+
 sudo mkdir -p /srv && sudo chown $USER:$USER /srv
 cd /srv
-git clone https://github.com/DevMasterTechR/asset-app-back.git
+git clone git@github.com:DevMasterTechR/asset-app-back.git
 cd asset-app-back
 ```
 
-> Si el repo es privado, usa una deploy key o un token:
-> `git clone https://TU_TOKEN@github.com/DevMasterTechR/asset-app-back.git`
+Si `ssh -T git@github.com` falla con *Permission denied (publickey)*:
+
+```bash
+ls -l ~/.ssh/                      # ¿está la clave privada?
+eval "$(ssh-agent -s)" && ssh-add ~/.ssh/id_ed25519
+# y verifica que la pública esté en GitHub → Settings → SSH and GPG keys
+# (o como Deploy key del repo: Repo → Settings → Deploy keys)
+```
 
 ---
 
