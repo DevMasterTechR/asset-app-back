@@ -211,3 +211,48 @@ certbot renew --dry-run
 
 La API ya no depende de Supabase ni de internet para la base de datos: todo
 vive en el VPS, en el volumen `asset-app-db-data`.
+
+---
+
+## Problemas conocidos
+
+### `P3009: migrate found failed migrations` al arrancar la API
+
+Pasa si `prisma migrate deploy` intentó aplicar
+`20260513000000_add_parent_assignment_id` sobre una base donde la columna ya
+existía a mano (era el caso de Supabase). Prisma deja la migración marcada como
+**fallida** en `_prisma_migrations` y a partir de ahí se niega a aplicar nada más.
+Si el volcado se tomó después de ese intento, la base del VPS hereda el registro.
+
+Se resuelve marcando esa migración como aplicada (la columna ya está, no hay nada
+que ejecutar):
+
+```bash
+cd /srv/asset-app-back
+docker compose run --rm --no-deps --entrypoint sh api -c \
+  './node_modules/.bin/prisma migrate resolve --applied 20260513000000_add_parent_assignment_id \
+   && ./node_modules/.bin/prisma migrate status'
+docker compose up -d
+curl -s http://127.0.0.1:3000/health
+```
+
+`migrate status` debe terminar en *Database schema is up to date!*.
+
+### El contenedor reinicia en bucle por las migraciones
+
+Para arrancar sin aplicarlas y poder investigar desde dentro:
+
+```bash
+RUN_MIGRATIONS=false docker compose up -d
+docker compose exec api ./node_modules/.bin/prisma migrate status
+```
+
+### Volver a Supabase
+
+La copia del `.env` anterior permite volver atrás, pero **desactivando las
+migraciones**: aquel intento fallido sigue registrado en Supabase y daría P3009.
+
+```bash
+cp .env.supabase-<fecha> .env
+RUN_MIGRATIONS=false docker compose up -d
+```

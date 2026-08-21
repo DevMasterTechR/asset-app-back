@@ -63,7 +63,8 @@ services:
       PORT: "3000"
       # Con la BD propia ya no hay drift: el dump de Supabase incluye
       # la tabla _prisma_migrations, así que migrate deploy queda al día.
-      RUN_MIGRATIONS: "true"
+      # Se puede desactivar sin editar este archivo:  RUN_MIGRATIONS=false docker compose up -d
+      RUN_MIGRATIONS: "${RUN_MIGRATIONS:-true}"
 
     # Solo escucha en loopback: el acceso público entra por Nginx (443).
     ports:
