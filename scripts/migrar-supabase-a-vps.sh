@@ -107,10 +107,25 @@ if [ "$YA" != "0" ]; then
 fi
 
 info "Restaurando el volcado..."
-docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
-  -v ON_ERROR_STOP=1 --quiet < "$DUMP"
+# Postgres ya trae el esquema public creado, pero el volcado de Supabase
+# incluye CREATE SCHEMA "public" y con ON_ERROR_STOP eso aborta todo
+# ("schema public already exists"). Esas dos líneas se filtran: el resto
+# del volcado se aplica igual y cualquier otro error sí detiene el proceso.
+sed -e '/^CREATE SCHEMA "\?public"\?;$/d' \
+    -e '/^COMMENT ON SCHEMA "\?public"\?/d' \
+    "$DUMP" \
+  | docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+      -v ON_ERROR_STOP=1 --quiet
 verde "✓ Restauración terminada"
 
+# Con ON_ERROR_STOP el psql anterior habría fallado, pero un volcado que no
+# crea ninguna tabla pasaría desapercibido: se comprueba explícitamente.
+N_TABLAS=$(docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc \
+  "select count(*) from information_schema.tables where table_schema='public' and table_type='BASE TABLE'" | tr -d '[:space:]')
+if [ "$N_TABLAS" -lt 5 ]; then
+  rojo "✗ Tras restaurar solo hay $N_TABLAS tablas. Se aborta sin tocar el .env."
+  exit 1
+fi
 # ---------- 3. verificación fila por fila ----------
 info "Comparando Supabase con la copia local..."
 
