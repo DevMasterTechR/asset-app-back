@@ -24,7 +24,7 @@ export class PeopleService {
       }
 
       if (data.codigo) {
-        await this.liberarCodigoSiEstaEnUso(data.codigo);
+        await this.liberarCodigoSiEstaEnUso(data.codigo, undefined, undefined);
       }
       const persona = await this.prisma.person.create({ data });
       if (persona.codigo) {
@@ -38,26 +38,39 @@ export class PeopleService {
 
   // codigo es único (ver schema.prisma): si ya lo tiene otra persona, no
   // podemos simplemente asignarlo de nuevo (Prisma lo rechaza). En vez de
-  // que la sincronización falle, le quitamos el código a quien lo tenía
-  // (queda con uno referencial, no vacío, para no perder el registro de que
-  // alguna vez tuvo uno) y así el código pedido queda libre para la persona
-  // correcta.
-  private async liberarCodigoSiEstaEnUso(codigo: string, exceptoPersonId?: number) {
+  // fallar, se lo QUITAMOS a quien lo tenía:
+  //   - si la persona que pide el código está dejando libre uno propio
+  //     (codigoQueQuedaLibre), es un INTERCAMBIO real: el desplazado se
+  //     queda con ese número (y se propaga a sus activos, para que sus
+  //     periféricos también queden bien) — así nunca hay dos personas
+  //     compitiendo por el mismo número.
+  //   - si no hay nada con qué intercambiar (persona nueva, sin código
+  //     anterior), se le deja uno referencial (no vacío) y no se tocan sus
+  //     activos, porque no es un número real de inventario.
+  private async liberarCodigoSiEstaEnUso(codigo: string, exceptoPersonId?: number, codigoQueQuedaLibre?: string) {
     const otro = await this.prisma.person.findFirst({
       where: { codigo, ...(exceptoPersonId ? { id: { not: exceptoPersonId } } : {}) },
       select: { id: true },
     });
-    if (otro) {
+    if (!otro) return;
+
+    if (codigoQueQuedaLibre) {
+      await this.prisma.person.update({ where: { id: otro.id }, data: { codigo: codigoQueQuedaLibre } });
+      await this.propagarCodigoAActivos(otro.id, codigoQueQuedaLibre);
+    } else {
       await this.prisma.person.update({ where: { id: otro.id }, data: { codigo: `REF-${otro.id}` } });
     }
   }
 
   // El código que asigna HWIDApp (ej. "LAPT-406") es el código verdadero de
-  // ese equipo: si el número no coincide con el código que ya tenía la
-  // persona en Gestor-Tech, se lo actualizamos y se propaga a sus demás
-  // activos (llamado desde AssetsService.sincronizarDesdeHwid).
+  // ese equipo: si el número no coincide con el que ya tenía la persona en
+  // Gestor-Tech, se lo actualizamos y se propaga a sus demás activos
+  // (llamado desde AssetsService.sincronizarDesdeHwid). Si el número ya lo
+  // tenía otra persona, se lo intercambiamos por el que esta persona deja
+  // libre, en vez de dejarlo con un valor de relleno.
   async establecerCodigoDesdeHwid(personId: number, codigo: string) {
-    await this.liberarCodigoSiEstaEnUso(codigo, personId);
+    const actual = await this.prisma.person.findUnique({ where: { id: personId }, select: { codigo: true } });
+    await this.liberarCodigoSiEstaEnUso(codigo, personId, actual?.codigo ?? undefined);
     await this.prisma.person.update({ where: { id: personId }, data: { codigo } });
     await this.propagarCodigoAActivos(personId, codigo);
   }
@@ -151,6 +164,11 @@ export class PeopleService {
           const n = Number(payload[f]);
           if (!isNaN(n)) payload[f] = n;
         }
+      }
+
+      if (payload.codigo) {
+        const actual = await this.prisma.person.findUnique({ where: { id }, select: { codigo: true } });
+        await this.liberarCodigoSiEstaEnUso(payload.codigo, id, actual?.codigo ?? undefined);
       }
 
       const actualizada = await this.prisma.person.update({
