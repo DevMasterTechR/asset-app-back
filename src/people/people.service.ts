@@ -23,6 +23,9 @@ export class PeopleService {
         data.password = await bcrypt.hash(data.password, salt);
       }
 
+      if (data.codigo) {
+        await this.liberarCodigoSiEstaEnUso(data.codigo);
+      }
       const persona = await this.prisma.person.create({ data });
       if (persona.codigo) {
         await this.propagarCodigoAActivos(persona.id, persona.codigo);
@@ -33,11 +36,28 @@ export class PeopleService {
     }
   }
 
+  // codigo es único (ver schema.prisma): si ya lo tiene otra persona, no
+  // podemos simplemente asignarlo de nuevo (Prisma lo rechaza). En vez de
+  // que la sincronización falle, le quitamos el código a quien lo tenía
+  // (queda con uno referencial, no vacío, para no perder el registro de que
+  // alguna vez tuvo uno) y así el código pedido queda libre para la persona
+  // correcta.
+  private async liberarCodigoSiEstaEnUso(codigo: string, exceptoPersonId?: number) {
+    const otro = await this.prisma.person.findFirst({
+      where: { codigo, ...(exceptoPersonId ? { id: { not: exceptoPersonId } } : {}) },
+      select: { id: true },
+    });
+    if (otro) {
+      await this.prisma.person.update({ where: { id: otro.id }, data: { codigo: `REF-${otro.id}` } });
+    }
+  }
+
   // El código que asigna HWIDApp (ej. "LAPT-406") es el código verdadero de
   // ese equipo: si el número no coincide con el código que ya tenía la
   // persona en Gestor-Tech, se lo actualizamos y se propaga a sus demás
   // activos (llamado desde AssetsService.sincronizarDesdeHwid).
   async establecerCodigoDesdeHwid(personId: number, codigo: string) {
+    await this.liberarCodigoSiEstaEnUso(codigo, personId);
     await this.prisma.person.update({ where: { id: personId }, data: { codigo } });
     await this.propagarCodigoAActivos(personId, codigo);
   }
