@@ -413,7 +413,20 @@ export class AssetsService {
       // reescribe también su assetCode al formato correcto de una vez.
       const normalizarCodigo = (c: string) => String(c || '').replace(/\s+/g, '').toUpperCase();
       const candidatos = await this.prisma.asset.findMany({ select: { id: true, assetCode: true } });
-      const coincidencia = candidatos.find((a) => normalizarCodigo(a.assetCode) === normalizarCodigo(dto.assetCode));
+      let coincidencia = candidatos.find((a) => normalizarCodigo(a.assetCode) === normalizarCodigo(dto.assetCode));
+
+      // Si tampoco coincide por código (porque a la persona le acaban de
+      // cambiar el número en HWIDApp), es el MISMO equipo físico visto bajo
+      // su código anterior: hay que actualizarlo (y así, de paso, renombrarlo
+      // al nuevo código), no crear uno nuevo en blanco dejando el viejo
+      // huérfano con el número que ya no le corresponde.
+      if (!coincidencia && persona) {
+        const propio = await this.prisma.asset.findFirst({
+          where: { assignedPersonId: persona.id, assetType: dto.assetType },
+          select: { id: true, assetCode: true },
+        });
+        if (propio) coincidencia = propio;
+      }
 
       const activo = coincidencia
         ? await this.prisma.asset.update({
@@ -426,7 +439,13 @@ export class AssetsService {
 
       if (persona) {
         const numero = /-(\d+)$/.exec(dto.assetCode)?.[1];
-        if (numero && persona.codigo !== numero) {
+        // Siempre se vuelve a propagar, aunque el código ya coincida: es
+        // idempotente (aplicarCodigoDePersona no toca lo que ya está bien) y
+        // así, si algún activo se quedó "pegado" con el número viejo por
+        // cualquier motivo (como pasó con un código cargado con espacios),
+        // se autocorrige solo en el siguiente envío en vez de quedar
+        // atascado hasta que alguien lo note y lo arregle a mano.
+        if (numero) {
           await this.peopleService.establecerCodigoDesdeHwid(persona.id, numero);
         }
       }
