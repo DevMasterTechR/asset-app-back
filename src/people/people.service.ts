@@ -112,6 +112,7 @@ export class PeopleService {
         { lastName: { contains: term, mode: 'insensitive' } },
         { username: { contains: term, mode: 'insensitive' } },
         { nationalId: { contains: term, mode: 'insensitive' } },
+        { codigo: { contains: term, mode: 'insensitive' } },
       ];
     }
 
