@@ -428,6 +428,27 @@ export class AssetsService {
         if (propio) coincidencia = propio;
       }
 
+      // Intercambio automático: si el código de destino YA lo tiene otro
+      // activo (uno que no es el que estamos actualizando — ej. la laptop de
+      // Jair traía "LAPT - 006" cargado a mano desde antes, sin relación con
+      // este sistema), y esta actualización deja libre un código propio
+      // (el anterior de "coincidencia"), se lo damos a ese otro activo en
+      // vez de fallar por el índice único o dejarlo huérfano. Así nunca hace
+      // falta arreglar esto a mano: quien pierde el número se queda con el
+      // que la otra parte deja libre, como cambiar de lugar dos personas.
+      const codigoQueQuedaLibre =
+        coincidencia && normalizarCodigo(coincidencia.assetCode) !== normalizarCodigo(dto.assetCode)
+          ? coincidencia.assetCode
+          : undefined;
+      if (codigoQueQuedaLibre) {
+        const ocupante = candidatos.find(
+          (a) => normalizarCodigo(a.assetCode) === normalizarCodigo(dto.assetCode) && a.id !== coincidencia?.id,
+        );
+        if (ocupante) {
+          await this.prisma.asset.update({ where: { id: ocupante.id }, data: { assetCode: codigoQueQuedaLibre } });
+        }
+      }
+
       const activo = coincidencia
         ? await this.prisma.asset.update({
             where: { id: coincidencia.id },

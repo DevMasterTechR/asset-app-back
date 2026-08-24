@@ -84,9 +84,20 @@ export class PeopleService {
     const activos = await this.prisma.asset.findMany({ where: { assignedPersonId: personId } });
     for (const activo of activos) {
       const nuevoCodigo = aplicarCodigoDePersona(activo.assetCode, codigo);
-      if (nuevoCodigo !== activo.assetCode) {
-        await this.prisma.asset.update({ where: { id: activo.id }, data: { assetCode: nuevoCodigo } });
+      if (nuevoCodigo === activo.assetCode) continue;
+
+      // El código del tipo (ej. "CARGL-006") es único: si ya lo tiene OTRO
+      // activo (de alguien más, cargado a mano o de otra fuente), se le da
+      // el código que este activo está dejando libre — intercambio
+      // automático, igual que con el equipo principal en sincronizarDesdeHwid.
+      const ocupante = await this.prisma.asset.findFirst({
+        where: { id: { not: activo.id }, assetCode: nuevoCodigo },
+        select: { id: true },
+      });
+      if (ocupante) {
+        await this.prisma.asset.update({ where: { id: ocupante.id }, data: { assetCode: activo.assetCode } });
       }
+      await this.prisma.asset.update({ where: { id: activo.id }, data: { assetCode: nuevoCodigo } });
     }
   }
 
