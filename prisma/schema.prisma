@@ -134,6 +134,10 @@ model Person {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
+  // Código de inventario de la persona (ej. "406"): se hereda automáticamente
+  // al código de todos sus activos asignados (ej. LAPT-001 pasa a LAPT-406).
+  codigo String? @unique
+
   currentToken String?
   lastActivityAt   DateTime?
 

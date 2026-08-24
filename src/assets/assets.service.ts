@@ -2,12 +2,18 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
+import { SyncHwidAssetDto } from './dto/sync-hwid-asset.dto';
 import { handlePrismaError } from 'src/common/utils/prisma-error.util';
+import { aplicarCodigoDePersona } from 'src/common/utils/asset-code.util';
+import { PeopleService } from '../people/people.service';
 
 
 @Injectable()
 export class AssetsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly peopleService: PeopleService,
+  ) {}
 
   async create(data: CreateAssetDto) {
     try {
@@ -214,6 +220,18 @@ export class AssetsService {
         }
       }
 
+      // Asignación directa (fuera del flujo normal de AssignmentHistory): si
+      // este PUT le pone assignedPersonId a un activo que estaba disponible
+      // y la persona tiene código propio, el activo lo hereda -salvo que el
+      // propio PUT ya venga con un assetCode explícito, que manda.
+      if (!isAssigned && updateData.assignedPersonId && data.assetCode === undefined) {
+        const persona = await this.prisma.person.findUnique({ where: { id: updateData.assignedPersonId } });
+        if (persona?.codigo) {
+          const nuevoCodigo = aplicarCodigoDePersona(existingAsset.assetCode, persona.codigo);
+          if (nuevoCodigo !== existingAsset.assetCode) updateData.assetCode = nuevoCodigo;
+        }
+      }
+
       if (process.env.DEBUG_ASSETS_SERVICE === 'true') {
         console.log('[AssetsService.update] Ejecutando prisma.asset.update con:', updateData);
       }
@@ -319,5 +337,95 @@ export class AssetsService {
       assets: p.assets,
       count: p.assets.length,
     }));
+  }
+
+  // Sincroniza el activo que corresponde a un equipo de HWIDApp. El código
+  // que manda HWIDApp (ej. "LAPT-406") es el código VERDADERO para ese
+  // activo: crea el Asset si no existe, o lo actualiza si ya existe.
+  //
+  // Si aparece otro activo con el mismo número de serie pero un código
+  // distinto, se considera un duplicado (alta manual repetida del mismo
+  // equipo físico) y se elimina. Si ese duplicado ya tiene historial real
+  // (asignaciones, préstamos, capacidades de almacenamiento), Postgres
+  // rechaza el borrado por integridad referencial: en vez de forzarlo y
+  // perder ese historial, se deja señalado para revisión manual.
+  //
+  // Limitación conocida: si esto reasigna el activo a otra persona, NO se
+  // crea un AssignmentHistory (eso lo maneja únicamente el flujo normal de
+  // asignaciones); solo se actualiza el campo directo del activo.
+  async sincronizarDesdeHwid(dto: SyncHwidAssetDto) {
+    try {
+      const duplicadosEliminados: string[] = [];
+      const duplicadosConHistorial: string[] = [];
+
+      const serial = dto.serialNumber?.trim();
+      if (serial) {
+        const duplicados = await this.prisma.asset.findMany({
+          where: { serialNumber: serial, assetCode: { not: dto.assetCode } },
+        });
+        for (const dup of duplicados) {
+          try {
+            await this.prisma.asset.delete({ where: { id: dup.id } });
+            duplicadosEliminados.push(dup.assetCode);
+          } catch {
+            duplicadosConHistorial.push(dup.assetCode);
+          }
+        }
+      }
+
+      let branchId: number | undefined;
+      const sucursal = dto.sucursal?.trim();
+      if (sucursal) {
+        const branch = await this.prisma.branch.findFirst({
+          where: { name: { equals: sucursal, mode: 'insensitive' } },
+        });
+        branchId = branch?.id;
+      }
+
+      let persona: { id: number; codigo: string | null } | null = null;
+      const cedula = dto.cedula?.trim();
+      if (cedula) {
+        const resultado = await this.peopleService.findByCedulaConFallback(cedula);
+        if (resultado.match !== 'none' && resultado.cedulaEncontrada) {
+          persona = await this.prisma.person.findUnique({
+            where: { nationalId: resultado.cedulaEncontrada },
+            select: { id: true, codigo: true },
+          });
+        }
+      }
+
+      const datosBase: any = {
+        assetType: dto.assetType,
+        serialNumber: serial || undefined,
+        brand: dto.brand?.trim() || undefined,
+        model: dto.model?.trim() || undefined,
+        attributesJson: dto.attributesJson || undefined,
+        ...(branchId !== undefined ? { branchId } : {}),
+        ...(persona ? { assignedPersonId: persona.id, status: 'assigned' as const } : {}),
+      };
+
+      const existente = await this.prisma.asset.findUnique({ where: { assetCode: dto.assetCode } });
+      const activo = existente
+        ? await this.prisma.asset.update({ where: { id: existente.id }, data: datosBase })
+        : await this.prisma.asset.create({
+            data: { assetCode: dto.assetCode, status: persona ? 'assigned' : 'available', ...datosBase },
+          });
+
+      if (persona) {
+        const numero = /-(\d+)$/.exec(dto.assetCode)?.[1];
+        if (numero && persona.codigo !== numero) {
+          await this.peopleService.establecerCodigoDesdeHwid(persona.id, numero);
+        }
+      }
+
+      return {
+        asset: activo,
+        personaVinculada: persona?.id ?? null,
+        duplicadosEliminados,
+        duplicadosConHistorial,
+      };
+    } catch (error) {
+      handlePrismaError(error, 'Activo (sincronización HWID)');
+    }
   }
 }

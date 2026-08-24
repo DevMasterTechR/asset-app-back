@@ -4,6 +4,7 @@ import {
     IsNotEmpty,
     IsOptional,
     IsString,
+    Matches,
     MinLength,
     IsArray,
 } from 'class-validator';
@@ -98,6 +99,15 @@ export class CreatePersonDto {
     @IsOptional()
     @IsString()
     observation?: string;
+
+    @ApiPropertyOptional({
+        description: 'Código de inventario de la persona (solo números, hasta 6 dígitos). Se hereda automáticamente al código de todos sus activos asignados, ej.: código 406 -> LAPT-406, CARGL-406',
+        example: '406',
+    })
+    @IsOptional()
+    @IsString()
+    @Matches(/^[0-9]{1,6}$/, { message: 'El código debe contener solo números (hasta 6 dígitos)' })
+    codigo?: string;
 
     @ApiPropertyOptional({
         description: 'IDs de activos asignados a T.I. con esta persona',

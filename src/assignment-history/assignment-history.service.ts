@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateAssignmentHistoryDto } from './dto/create-assignment-history.dto';
 import { UpdateAssignmentHistoryDto } from './dto/update-assignment-history.dto';
 import { handlePrismaError } from 'src/common/utils/prisma-error.util';
+import { aplicarCodigoDePersona } from 'src/common/utils/asset-code.util';
 
 @Injectable()
 export class AssignmentHistoryService {
@@ -73,6 +74,10 @@ export class AssignmentHistoryService {
 
       const assignmentData = { ...data, branchId: resolvedBranchId, deliveryNotes };
 
+      // Si la persona tiene un código propio (ej. "406"), el activo lo
+      // hereda manteniendo su prefijo (LAPT-001 -> LAPT-406).
+      const nuevoAssetCode = person.codigo ? aplicarCodigoDePersona(asset.assetCode, person.codigo) : undefined;
+
       // Crear historial y actualizar estado del activo en una transacción
       // Incluir relaciones en el assignment creado para que el frontend tenga
       // directamente la información del activo, persona y sucursal.
@@ -91,6 +96,7 @@ export class AssignmentHistoryService {
             deliveryDate: data.assignmentDate ? new Date(data.assignmentDate) : new Date(),
             // Al asignar, la fecha de recepción debe limpiarse (no recibido aún)
             receivedDate: null,
+            ...(nuevoAssetCode && nuevoAssetCode !== asset.assetCode ? { assetCode: nuevoAssetCode } : {}),
           },
         }),
       ]);
@@ -252,6 +258,13 @@ export class AssignmentHistoryService {
           ? incomingBranchId
           : existing.branchId ?? existing.asset?.branchId ?? targetPerson.branchId ?? undefined;
 
+      // Si cambia de dueño y el nuevo tiene código propio, el activo lo
+      // hereda manteniendo su prefijo (igual que en una asignación nueva).
+      const nuevoAssetCode =
+        targetPersonId !== existing.personId && targetPerson.codigo
+          ? aplicarCodigoDePersona(existing.asset.assetCode, targetPerson.codigo)
+          : undefined;
+
       const txResult = await this.prisma.$transaction([
         this.prisma.assignmentHistory.update({
           where: { id },
@@ -263,6 +276,7 @@ export class AssignmentHistoryService {
             status: 'assigned',
             assignedPersonId: targetPersonId,
             branchId: resolvedBranchId ?? existing.asset.branchId,
+            ...(nuevoAssetCode && nuevoAssetCode !== existing.asset.assetCode ? { assetCode: nuevoAssetCode } : {}),
           },
         }),
       ]);

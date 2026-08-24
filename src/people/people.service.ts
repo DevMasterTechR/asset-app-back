@@ -9,6 +9,7 @@ import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
 import * as bcrypt from 'bcrypt';
 import { Prisma } from '@prisma/client';
+import { aplicarCodigoDePersona } from '../common/utils/asset-code.util';
 
 @Injectable()
 export class PeopleService {
@@ -22,9 +23,37 @@ export class PeopleService {
         data.password = await bcrypt.hash(data.password, salt);
       }
 
-      return await this.prisma.person.create({ data });
+      const persona = await this.prisma.person.create({ data });
+      if (persona.codigo) {
+        await this.propagarCodigoAActivos(persona.id, persona.codigo);
+      }
+      return persona;
     } catch (error) {
       this.handlePrismaError(error);
+    }
+  }
+
+  // El código que asigna HWIDApp (ej. "LAPT-406") es el código verdadero de
+  // ese equipo: si el número no coincide con el código que ya tenía la
+  // persona en Gestor-Tech, se lo actualizamos y se propaga a sus demás
+  // activos (llamado desde AssetsService.sincronizarDesdeHwid).
+  async establecerCodigoDesdeHwid(personId: number, codigo: string) {
+    await this.prisma.person.update({ where: { id: personId }, data: { codigo } });
+    await this.propagarCodigoAActivos(personId, codigo);
+  }
+
+  // Aplica el código de la persona (ej. "406") al código de todos sus
+  // activos actualmente asignados, manteniendo el prefijo de cada uno
+  // (LAPT-001 -> LAPT-406, CARGL-001 -> CARGL-406, etc.). Se llama cada vez
+  // que se crea o actualiza una persona con un código nuevo, y también al
+  // asignarle un activo (ver AssignmentHistoryService y AssetsService).
+  private async propagarCodigoAActivos(personId: number, codigo: string) {
+    const activos = await this.prisma.asset.findMany({ where: { assignedPersonId: personId } });
+    for (const activo of activos) {
+      const nuevoCodigo = aplicarCodigoDePersona(activo.assetCode, codigo);
+      if (nuevoCodigo !== activo.assetCode) {
+        await this.prisma.asset.update({ where: { id: activo.id }, data: { assetCode: nuevoCodigo } });
+      }
     }
   }
 
@@ -104,10 +133,16 @@ export class PeopleService {
         }
       }
 
-      return await this.prisma.person.update({
+      const actualizada = await this.prisma.person.update({
         where: { id },
         data: payload,
       });
+
+      if (payload.codigo) {
+        await this.propagarCodigoAActivos(id, payload.codigo);
+      }
+
+      return actualizada;
     } catch (error) {
       // Loguear el error completo para ayudar a depuración
       console.error('[PeopleService.update] caught error:', error && error.stack ? error.stack : error);
@@ -144,6 +179,41 @@ export class PeopleService {
     } catch (error) {
       this.handlePrismaError(error, id);
     }
+  }
+
+  // Búsqueda por cédula para integraciones externas (ej. HWIDApp). Cubre el
+  // caso real de cédulas que perdieron el cero inicial al guardarse (ej.
+  // "0215234759" quedó como "215234759"): si no hay match exacto, prueba con
+  // el cero puesto o quitado antes de dar por no encontrada a la persona.
+  async findByCedulaConFallback(cedulaCruda: string) {
+    const cedula = String(cedulaCruda || '').replace(/\D+/g, '');
+    const include = { department: true, branch: true } as const;
+
+    const mapPersona = (p: any) => ({
+      nombre: p.firstName,
+      apellido: p.lastName,
+      sucursal: p.branch?.name ?? null,
+      departamento: p.department?.name ?? null,
+      cedula: p.nationalId,
+    });
+
+    const exacto = await this.prisma.person.findUnique({ where: { nationalId: cedula }, include });
+    if (exacto) {
+      return { match: 'exact', cedulaConsultada: cedula, cedulaEncontrada: exacto.nationalId, persona: mapPersona(exacto) };
+    }
+
+    const variantes: string[] = [];
+    if (cedula.length === 10 && cedula.startsWith('0')) variantes.push(cedula.slice(1));
+    if (cedula.length === 9) variantes.push('0' + cedula);
+
+    for (const variante of variantes) {
+      const encontrada = await this.prisma.person.findUnique({ where: { nationalId: variante }, include });
+      if (encontrada) {
+        return { match: 'fuzzy', cedulaConsultada: cedula, cedulaEncontrada: encontrada.nationalId, persona: mapPersona(encontrada) };
+      }
+    }
+
+    return { match: 'none', cedulaConsultada: cedula, cedulaEncontrada: null, persona: null };
   }
 
   async findUserDetails(id: number) {
