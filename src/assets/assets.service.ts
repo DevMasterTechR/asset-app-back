@@ -404,9 +404,22 @@ export class AssetsService {
         ...(persona ? { assignedPersonId: persona.id, status: 'assigned' as const } : {}),
       };
 
-      const existente = await this.prisma.asset.findUnique({ where: { assetCode: dto.assetCode } });
-      const activo = existente
-        ? await this.prisma.asset.update({ where: { id: existente.id }, data: datosBase })
+      // Comparación exacta de assetCode NO alcanza: códigos cargados a mano
+      // alguna vez quedaron con espacios ("LAPT - 006") y el que manda
+      // HWIDApp siempre viene sin ellos ("LAPT-006"). Si no se normaliza,
+      // esto se trataba como "otro equipo" y se creaba un duplicado en blanco
+      // en vez de actualizar el que ya tenía sus datos (fecha de compra,
+      // entrega, etc.). Al encontrar el existente por código normalizado, se
+      // reescribe también su assetCode al formato correcto de una vez.
+      const normalizarCodigo = (c: string) => String(c || '').replace(/\s+/g, '').toUpperCase();
+      const candidatos = await this.prisma.asset.findMany({ select: { id: true, assetCode: true } });
+      const coincidencia = candidatos.find((a) => normalizarCodigo(a.assetCode) === normalizarCodigo(dto.assetCode));
+
+      const activo = coincidencia
+        ? await this.prisma.asset.update({
+            where: { id: coincidencia.id },
+            data: { ...datosBase, assetCode: dto.assetCode },
+          })
         : await this.prisma.asset.create({
             data: { assetCode: dto.assetCode, status: persona ? 'assigned' : 'available', ...datosBase },
           });
