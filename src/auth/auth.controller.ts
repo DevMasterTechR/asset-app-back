@@ -30,6 +30,7 @@ import { AuthService } from './auth.service';
 import { ForceChangePasswordDto } from './dto/force-change-password.dto';
 import { AdminOnly } from 'src/common/decorators/admin-only.decorator';
 import {Authenticated} from 'src/common/decorators/authenticated.decorator';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -39,6 +40,9 @@ export class AuthController {
 
     @Post('login')
     @HttpCode(HttpStatus.OK)
+    // Más estricto que el límite general: frena intentos de adivinar
+    // contraseña por fuerza bruta sin molestar a un usuario real.
+    @Throttle({ default: { limit: 8, ttl: 60_000 } })
     @ApiOperation({ summary: 'Login de usuario' })
     @ApiBody({ type: LoginDto })
     @ApiOkResponse({ description: 'Login exitoso' })

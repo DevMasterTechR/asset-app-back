@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
+import helmet from 'helmet';
 
 async function bootstrap() {
   // Soportar HTTPS en desarrollo/producción si se proporcionan certificados
@@ -39,15 +40,20 @@ async function bootstrap() {
   // reconozca el esquema https y la cookie jwt se emita como Secure.
   app.set('trust proxy', 1);
 
-  // 🔒 Middleware y config
+  // 🔒 Cabeceras de seguridad estándar (X-Content-Type-Options,
+  // X-Frame-Options, HSTS, etc.). Sin CSP: esta app es una API JSON, no sirve
+  // páginas propias (salvo Swagger en desarrollo), y una CSP por defecto
+  // rompería los scripts inline de Swagger UI.
+  app.use(helmet({ contentSecurityPolicy: false }));
+
   // Orígenes permitidos: se pueden sobreescribir con CORS_ORIGINS
-  // (lista separada por comas) sin recompilar.
+  // (lista separada por comas) sin recompilar. Los dominios de desarrollo
+  // solo se usan si CORS_ORIGINS no está definida (nunca en producción,
+  // donde el .env siempre la fija al dominio real).
   const defaultOrigins = [
     'http://192.168.50.95:8080',
     'http://localhost:8080',
     'http://localhost:5173',
-    'https://asset-app-front.vercel.app',
-    'https://asset-app-front-ew98.vercel.app',
   ];
   const envOrigins = (process.env.CORS_ORIGINS ?? '')
     .split(',')
@@ -65,16 +71,20 @@ async function bootstrap() {
   // Enable transform so DTO numeric/string types are converted (e.g. "1" -> 1)
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  // 📄 Swagger
-  const config = new DocumentBuilder()
-    .setTitle('Asset Management API')
-    .setDescription('API para gestionar activos, tarjetas SIM, credenciales, etc.')
-    .setVersion('1.1')
-    .addCookieAuth('jwt')
-    .build();
+  // 📄 Swagger: solo fuera de producción. Documenta rutas, parámetros y DTOs
+  // de toda la API — dejarlo público en internet es regalarle el mapa
+  // completo del backend a cualquiera que lo encuentre.
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Asset Management API')
+      .setDescription('API para gestionar activos, tarjetas SIM, credenciales, etc.')
+      .setVersion('1.1')
+      .addCookieAuth('jwt')
+      .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
+  }
 
   await app.listen(process.env.PORT ?? 3000);
 }
