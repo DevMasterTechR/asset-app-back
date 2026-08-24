@@ -413,19 +413,28 @@ export class AssetsService {
       // reescribe también su assetCode al formato correcto de una vez.
       const normalizarCodigo = (c: string) => String(c || '').replace(/\s+/g, '').toUpperCase();
       const candidatos = await this.prisma.asset.findMany({ select: { id: true, assetCode: true } });
-      let coincidencia = candidatos.find((a) => normalizarCodigo(a.assetCode) === normalizarCodigo(dto.assetCode));
+      let coincidencia: { id: number; assetCode: string } | undefined;
 
-      // Si tampoco coincide por código (porque a la persona le acaban de
-      // cambiar el número en HWIDApp), es el MISMO equipo físico visto bajo
-      // su código anterior: hay que actualizarlo (y así, de paso, renombrarlo
-      // al nuevo código), no crear uno nuevo en blanco dejando el viejo
-      // huérfano con el número que ya no le corresponde.
-      if (!coincidencia && persona) {
+      // Si conocemos a la persona (por cédula), el equipo del MISMO TIPO que
+      // ya tiene asignado es, sin ninguna ambigüedad, el mismo objeto físico
+      // visto bajo su código anterior — se prioriza esto sobre buscar por
+      // texto de código. Si no, buscar solo por código podía "enganchar" por
+      // error el equipo de OTRA persona que coincidía de casualidad en el
+      // número (así se mezclaron los equipos de Zoila y Jair al compartir el
+      // número 006 sin ninguna relación real entre ellos).
+      if (persona) {
         const propio = await this.prisma.asset.findFirst({
           where: { assignedPersonId: persona.id, assetType: dto.assetType },
           select: { id: true, assetCode: true },
         });
         if (propio) coincidencia = propio;
+      }
+
+      // Si no hay persona, o no tiene nada de ese tipo todavía: comparación
+      // por código, ignorando espacios (algunos se cargaron a mano como
+      // "LAPT - 006" en vez de "LAPT-006").
+      if (!coincidencia) {
+        coincidencia = candidatos.find((a) => normalizarCodigo(a.assetCode) === normalizarCodigo(dto.assetCode));
       }
 
       // Intercambio automático: si el código de destino YA lo tiene otro
@@ -438,7 +447,7 @@ export class AssetsService {
       // que la otra parte deja libre, como cambiar de lugar dos personas.
       const codigoQueQuedaLibre =
         coincidencia && normalizarCodigo(coincidencia.assetCode) !== normalizarCodigo(dto.assetCode)
-          ? coincidencia.assetCode
+          ? coincidencia.assetCode.replace(/\s+/g, '') // de paso, formato canónico sin espacios
           : undefined;
       if (codigoQueQuedaLibre) {
         const ocupante = candidatos.find(
