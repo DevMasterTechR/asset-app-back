@@ -35,10 +35,20 @@ export class SyncHwidAssetDto {
     @IsString()
     cedula?: string;
 
+    @ApiPropertyOptional({ description: 'Nombre y apellido del responsable guardado en HWIDApp' })
+    @IsOptional()
+    @IsString()
+    nombre?: string;
+
     @ApiPropertyOptional({ description: 'Nombre de la sucursal guardada en HWIDApp' })
     @IsOptional()
     @IsString()
     sucursal?: string;
+
+    @ApiPropertyOptional({ description: 'Nombre del departamento guardado en HWIDApp' })
+    @IsOptional()
+    @IsString()
+    departamento?: string;
 
     @ApiPropertyOptional({ description: 'Resto de la ficha técnica (CPU, RAM, discos, etc.)', type: Object })
     @IsOptional()

@@ -395,9 +395,6 @@ export class AssetsService {
   // rechaza el borrado por integridad referencial: en vez de forzarlo y
   // perder ese historial, se deja señalado para revisión manual.
   //
-  // Limitación conocida: si esto reasigna el activo a otra persona, NO se
-  // crea un AssignmentHistory (eso lo maneja únicamente el flujo normal de
-  // asignaciones); solo se actualiza el campo directo del activo.
   async sincronizarDesdeHwid(dto: SyncHwidAssetDto) {
     try {
       const duplicadosEliminados: string[] = [];
@@ -439,8 +436,43 @@ export class AssetsService {
         if (resultado.match !== 'none' && resultado.cedulaEncontrada) {
           persona = await this.prisma.person.findUnique({
             where: { nationalId: resultado.cedulaEncontrada },
-            select: { id: true, codigo: true },
-          });
+            select: { id: true, codigo: true, departmentId: true, branchId: true, firstName: true, lastName: true },
+          }) as any;
+        }
+      }
+
+      // HWIDApp es la fuente de verdad para los datos de la persona: lo que
+      // el usuario escribió y confirmó ahí (nombre, sucursal, departamento)
+      // es un dato real y verificado, así que se actualiza en Gestor-Tech
+      // cada vez que llega, no solo la primera vez.
+      if (persona) {
+        const personaActualizada: any = persona;
+        const cambiosPersona: Record<string, any> = {};
+
+        const departamento = dto.departamento?.trim();
+        if (departamento) {
+          const departamentos = await this.prisma.department.findMany({ select: { id: true, name: true } });
+          const depto = departamentos.find((d) => d.name.trim().toUpperCase() === departamento.toUpperCase());
+          if (depto && depto.id !== personaActualizada.departmentId) cambiosPersona.departmentId = depto.id;
+        }
+
+        if (branchId !== undefined && branchId !== personaActualizada.branchId) {
+          cambiosPersona.branchId = branchId;
+        }
+
+        const nombreCompleto = dto.nombre?.trim();
+        if (nombreCompleto) {
+          const partes = nombreCompleto.split(/\s+/);
+          const firstName = partes.shift() || '';
+          const lastName = partes.join(' ');
+          if (firstName && (firstName !== personaActualizada.firstName || lastName !== personaActualizada.lastName)) {
+            cambiosPersona.firstName = firstName;
+            cambiosPersona.lastName = lastName;
+          }
+        }
+
+        if (Object.keys(cambiosPersona).length > 0) {
+          await this.prisma.person.update({ where: { id: persona.id }, data: cambiosPersona });
         }
       }
 
