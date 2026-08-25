@@ -545,11 +545,15 @@ export class AssetsService {
         // ese registro (si no existe ya uno activo para esta persona), y si
         // el equipo tenía una asignación activa a OTRA persona, se cierra
         // primero para no dejar dos asignaciones activas del mismo equipo.
-        const yaAsignado = await this.prisma.assignmentHistory.findFirst({
+        const existente = await this.prisma.assignmentHistory.findFirst({
           where: { assetId: activo.id, personId: persona.id, returnDate: null },
           select: { id: true },
         });
-        if (!yaAsignado) {
+
+        let asignacionId: number;
+        if (existente) {
+          asignacionId = existente.id;
+        } else {
           await this.prisma.assignmentHistory.updateMany({
             where: { assetId: activo.id, returnDate: null },
             data: {
@@ -557,13 +561,41 @@ export class AssetsService {
               returnNotes: 'Cerrada automáticamente: el equipo cambió de responsable vía HWIDApp.',
             },
           });
-          await this.prisma.assignmentHistory.create({
+          const nueva = await this.prisma.assignmentHistory.create({
             data: {
               assetId: activo.id,
               personId: persona.id,
               branchId: branchId ?? undefined,
               deliveryNotes: 'Asignación creada automáticamente por la sincronización con HWIDApp.',
             },
+          });
+          asignacionId = nueva.id;
+        }
+
+        // Enlazar como "kit": los accesorios (mouse, teclado, mousepad,
+        // cargador, soporte, etc.) que esta persona ya tiene asignados por
+        // separado, y que todavía no están enlazados a ninguna asignación
+        // "padre", se enlazan a la de esta laptop — para que se vean
+        // agrupados igual que si se hubieran entregado juntos desde el panel.
+        const TIPOS_ACCESORIO = [
+          'mouse', 'teclado', 'mousepad', 'monitor', 'soporte', 'hub',
+          'adaptador-memoria', 'adaptador-red', 'cargador-laptop',
+          'cargador-celular', 'cable-carga',
+        ];
+        const accesoriosSinEnlazar = await this.prisma.assignmentHistory.findMany({
+          where: {
+            personId: persona.id,
+            returnDate: null,
+            parentAssignmentId: null,
+            id: { not: asignacionId },
+            asset: { assetType: { in: TIPOS_ACCESORIO, mode: 'insensitive' } },
+          },
+          select: { id: true },
+        });
+        if (accesoriosSinEnlazar.length) {
+          await this.prisma.assignmentHistory.updateMany({
+            where: { id: { in: accesoriosSinEnlazar.map((a) => a.id) } },
+            data: { parentAssignmentId: asignacionId },
           });
         }
       }
