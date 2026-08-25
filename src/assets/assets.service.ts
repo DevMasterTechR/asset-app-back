@@ -423,8 +423,13 @@ export class AssetsService {
       // número (así se mezclaron los equipos de Zoila y Jair al compartir el
       // número 006 sin ninguna relación real entre ellos).
       if (persona) {
+        // assetType es texto libre (viene de un lado con "Laptop", de otro
+        // con "laptop"): comparación insensible a mayúsculas/minúsculas,
+        // para que una diferencia de formato no le haga fallar esta
+        // búsqueda y termine agarrando por error el equipo de otra persona
+        // (fue exactamente lo que pasó: "laptop" vs "Laptop").
         const propio = await this.prisma.asset.findFirst({
-          where: { assignedPersonId: persona.id, assetType: dto.assetType },
+          where: { assignedPersonId: persona.id, assetType: { equals: dto.assetType, mode: 'insensitive' } },
           select: { id: true, assetCode: true },
         });
         if (propio) coincidencia = propio;

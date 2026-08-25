@@ -81,7 +81,14 @@ export class PeopleService {
   // que se crea o actualiza una persona con un código nuevo, y también al
   // asignarle un activo (ver AssignmentHistoryService y AssetsService).
   private async propagarCodigoAActivos(personId: number, codigo: string) {
+    const normalizarCodigo = (c: string) => String(c || '').replace(/\s+/g, '').toUpperCase();
     const activos = await this.prisma.asset.findMany({ where: { assignedPersonId: personId } });
+    // Candidatos para el "ocupante" en TODA la tabla, no solo los de esta
+    // persona: algunos códigos quedaron cargados a mano con espacios
+    // ("CARGL - 006"), y una comparación exacta de texto nunca los
+    // encuentra contra el formato canónico que se genera aquí.
+    const todos = await this.prisma.asset.findMany({ select: { id: true, assetCode: true } });
+
     for (const activo of activos) {
       const nuevoCodigo = aplicarCodigoDePersona(activo.assetCode, codigo);
       if (nuevoCodigo === activo.assetCode) continue;
@@ -90,10 +97,9 @@ export class PeopleService {
       // activo (de alguien más, cargado a mano o de otra fuente), se le da
       // el código que este activo está dejando libre — intercambio
       // automático, igual que con el equipo principal en sincronizarDesdeHwid.
-      const ocupante = await this.prisma.asset.findFirst({
-        where: { id: { not: activo.id }, assetCode: nuevoCodigo },
-        select: { id: true },
-      });
+      const ocupante = todos.find(
+        (a) => a.id !== activo.id && normalizarCodigo(a.assetCode) === normalizarCodigo(nuevoCodigo),
+      );
       if (ocupante) {
         await this.prisma.asset.update({ where: { id: ocupante.id }, data: { assetCode: activo.assetCode } });
       }
