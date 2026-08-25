@@ -78,6 +78,21 @@ export class AssignmentHistoryService {
       // hereda manteniendo su prefijo (LAPT-001 -> LAPT-406).
       const nuevoAssetCode = person.codigo ? aplicarCodigoDePersona(asset.assetCode, person.codigo) : undefined;
 
+      // Si ese código ya lo tiene OTRO activo (de otra persona), se lo
+      // intercambiamos por el que este activo está dejando libre — mismo
+      // criterio que en la sincronización con HWIDApp: nunca debe quedar un
+      // código de laptop/accesorio duplicado en el inventario.
+      if (nuevoAssetCode && nuevoAssetCode !== asset.assetCode) {
+        const normalizarCodigo = (c: string) => String(c || '').replace(/\s+/g, '').toUpperCase();
+        const candidatos = await this.prisma.asset.findMany({ select: { id: true, assetCode: true } });
+        const ocupante = candidatos.find(
+          (a) => a.id !== asset.id && normalizarCodigo(a.assetCode) === normalizarCodigo(nuevoAssetCode),
+        );
+        if (ocupante) {
+          await this.prisma.asset.update({ where: { id: ocupante.id }, data: { assetCode: asset.assetCode } });
+        }
+      }
+
       // Crear historial y actualizar estado del activo en una transacción
       // Incluir relaciones en el assignment creado para que el frontend tenga
       // directamente la información del activo, persona y sucursal.
@@ -264,6 +279,20 @@ export class AssignmentHistoryService {
         targetPersonId !== existing.personId && targetPerson.codigo
           ? aplicarCodigoDePersona(existing.asset.assetCode, targetPerson.codigo)
           : undefined;
+
+      if (nuevoAssetCode && nuevoAssetCode !== existing.asset.assetCode) {
+        const normalizarCodigo = (c: string) => String(c || '').replace(/\s+/g, '').toUpperCase();
+        const candidatos = await this.prisma.asset.findMany({ select: { id: true, assetCode: true } });
+        const ocupante = candidatos.find(
+          (a) => a.id !== existing.assetId && normalizarCodigo(a.assetCode) === normalizarCodigo(nuevoAssetCode),
+        );
+        if (ocupante) {
+          await this.prisma.asset.update({
+            where: { id: ocupante.id },
+            data: { assetCode: existing.asset.assetCode },
+          });
+        }
+      }
 
       const txResult = await this.prisma.$transaction([
         this.prisma.assignmentHistory.update({
