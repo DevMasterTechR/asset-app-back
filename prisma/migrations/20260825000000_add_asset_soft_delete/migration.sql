@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Asset" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3);
+ALTER TABLE "Asset" ADD COLUMN IF NOT EXISTS "deleteReason" TEXT;

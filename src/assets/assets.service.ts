@@ -7,6 +7,27 @@ import { handlePrismaError } from 'src/common/utils/prisma-error.util';
 import { aplicarCodigoDePersona } from 'src/common/utils/asset-code.util';
 import { PeopleService } from '../people/people.service';
 
+// Traduce el nombre de sucursal que manda HWIDApp (fijo, ver
+// hwid-app/sucursales.go) al nombre real que tiene esa sucursal en
+// Gestor-Tech (tabla Branch) — no son el mismo texto ("QUITO MATRIZ" vs
+// "Matriz Quito", "CARAPUNGO" vs "Carapungo (Express)"). Si se agrega una
+// sucursal nueva en HWIDApp, hay que agregarla aquí también.
+const MAPEO_SUCURSAL_HWID: Record<string, string> = {
+  IBARRA: 'Ibarra',
+  CARAPUNGO: 'Carapungo (Express)',
+  'QUITO MATRIZ': 'Matriz Quito',
+  'QUITO SUR': 'Quito Sur (Express)',
+  SANGOLQUÍ: 'Sangolquí (Express)',
+  'STO. DOMINGO': 'Santo Domingo',
+  QUEVEDO: 'Quevedo',
+  MANTA: 'Manta',
+  PORTOVIEJO: 'Portoviejo (Express)',
+  AMBATO: 'Ambato',
+  GUAYAQUIL: 'Guayaquil',
+  CUENCA: 'Cuenca',
+  MACHALA: 'Machala',
+  LOJA: 'Loja',
+};
 
 @Injectable()
 export class AssetsService {
@@ -90,7 +111,8 @@ export class AssetsService {
 
   // Obtener activos con soporte de búsqueda y paginación
   async findAll(q?: string, page = 1, limit = 10) {
-    const where: any = {};
+    // Los eliminados (borrado lógico) no aparecen en el listado normal.
+    const where: any = { deletedAt: null };
 
     if (q && q.trim().length > 0) {
       const term = q.trim();
@@ -243,9 +265,32 @@ export class AssetsService {
     }
   }
 
-  async remove(id: number) {
+  // Eliminar un activo es SIEMPRE un borrado lógico (soft delete), no un
+  // DELETE real: nunca se puede perder el historial de asignaciones,
+  // préstamos o SIM asociadas, y hasta ahora eso mismo (el historial) era
+  // lo que bloqueaba borrar un equipo con actividad ("no pude borrar").
+  // Se pide un motivo obligatorio para que quede constancia de por qué se
+  // eliminó, y desaparece de los listados normales, pero sigue en la base
+  // de datos para auditoría.
+  async remove(id: number, reason?: string) {
     try {
-      return await this.prisma.asset.delete({ where: { id } });
+      const motivo = (reason || '').trim();
+      if (!motivo) {
+        throw new BadRequestException('Escribe un motivo para eliminar el equipo.');
+      }
+      await this.prisma.assignmentHistory.updateMany({
+        where: { assetId: id, returnDate: null },
+        data: { returnDate: new Date(), returnNotes: `Eliminado del inventario: ${motivo}` },
+      });
+      return await this.prisma.asset.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+          deleteReason: motivo,
+          assignedPersonId: null,
+          status: 'decommissioned',
+        },
+      });
     } catch (error) {
       handlePrismaError(error, 'Activo', id);
     }
@@ -261,7 +306,7 @@ export class AssetsService {
 
   findAllByUser(userId: number) {
     return this.prisma.asset.findMany({
-      where: { assignedPersonId: userId },
+      where: { assignedPersonId: userId, deletedAt: null },
     });
   }
 
@@ -376,9 +421,14 @@ export class AssetsService {
       let branchId: number | undefined;
       const sucursal = dto.sucursal?.trim();
       if (sucursal) {
-        const branch = await this.prisma.branch.findFirst({
-          where: { name: { equals: sucursal, mode: 'insensitive' } },
-        });
+        // El nombre de sucursal de HWIDApp no coincide letra por letra con el
+        // de Gestor-Tech ("QUITO MATRIZ" vs "Matriz Quito", "CARAPUNGO" vs
+        // "Carapungo (Express)", etc.) — se traduce con este mapa antes de
+        // buscar. Si no está en el mapa, se busca tal cual (por si algún día
+        // coinciden o se agrega una sucursal nueva).
+        const nombreEsperado = (MAPEO_SUCURSAL_HWID[sucursal.toUpperCase()] || sucursal).trim().toUpperCase();
+        const branches = await this.prisma.branch.findMany({ select: { id: true, name: true } });
+        const branch = branches.find((b) => b.name.trim().toUpperCase() === nombreEsperado);
         branchId = branch?.id;
       }
 
@@ -411,8 +461,13 @@ export class AssetsService {
       // en vez de actualizar el que ya tenía sus datos (fecha de compra,
       // entrega, etc.). Al encontrar el existente por código normalizado, se
       // reescribe también su assetCode al formato correcto de una vez.
+      // Un equipo eliminado (borrado lógico) libera su código: no cuenta
+      // como "ocupado" para efectos de intercambio ni de coincidencia.
       const normalizarCodigo = (c: string) => String(c || '').replace(/\s+/g, '').toUpperCase();
-      const candidatos = await this.prisma.asset.findMany({ select: { id: true, assetCode: true } });
+      const candidatos = await this.prisma.asset.findMany({
+        where: { deletedAt: null },
+        select: { id: true, assetCode: true },
+      });
       let coincidencia: { id: number; assetCode: string } | undefined;
 
       // Si conocemos a la persona (por cédula), el equipo del MISMO TIPO que
@@ -482,6 +537,34 @@ export class AssetsService {
         // atascado hasta que alguien lo note y lo arregle a mano.
         if (numero) {
           await this.peopleService.establecerCodigoDesdeHwid(persona.id, numero);
+        }
+
+        // El equipo quedaba marcado "Asignado" (con assignedPersonId) pero
+        // sin ningún registro en AssignmentHistory: por eso no aparecía en
+        // la pantalla de Asignaciones ni tenía fecha de entrega ahí. Se crea
+        // ese registro (si no existe ya uno activo para esta persona), y si
+        // el equipo tenía una asignación activa a OTRA persona, se cierra
+        // primero para no dejar dos asignaciones activas del mismo equipo.
+        const yaAsignado = await this.prisma.assignmentHistory.findFirst({
+          where: { assetId: activo.id, personId: persona.id, returnDate: null },
+          select: { id: true },
+        });
+        if (!yaAsignado) {
+          await this.prisma.assignmentHistory.updateMany({
+            where: { assetId: activo.id, returnDate: null },
+            data: {
+              returnDate: new Date(),
+              returnNotes: 'Cerrada automáticamente: el equipo cambió de responsable vía HWIDApp.',
+            },
+          });
+          await this.prisma.assignmentHistory.create({
+            data: {
+              assetId: activo.id,
+              personId: persona.id,
+              branchId: branchId ?? undefined,
+              deliveryNotes: 'Asignación creada automáticamente por la sincronización con HWIDApp.',
+            },
+          });
         }
       }
 

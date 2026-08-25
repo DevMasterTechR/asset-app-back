@@ -23,7 +23,8 @@ import {
     ApiOkResponse,
     ApiNoContentResponse,
     ApiBadRequestResponse,
-    ApiNotFoundResponse, 
+    ApiNotFoundResponse,
+    ApiQuery,
 } from '@nestjs/swagger';
 
 import { AssetsService } from './assets.service';
@@ -138,12 +139,13 @@ export class AssetsController {
     @Delete(':id')
     @AdminOnly()
     @HttpCode(HttpStatus.NO_CONTENT)
-    @ApiOperation({ summary: 'Eliminar un activo' })
+    @ApiOperation({ summary: 'Eliminar (borrado logico) un activo' })
     @ApiParam({ name: 'id', type: 'number', example: 1 })
+    @ApiQuery({ name: 'reason', type: 'string', required: true, description: 'Motivo de la eliminación' })
     @ApiNoContentResponse({ description: 'Activo eliminado' })
     @ApiNotFoundResponse({ description: 'Activo no encontrado' })
-    @ApiBadRequestResponse({ description: 'ID inválido' })
-    remove(@Param('id', ParseIntPipe) id: number) {
-        return this.assetsService.remove(id);
+    @ApiBadRequestResponse({ description: 'ID inválido o falta el motivo' })
+    remove(@Param('id', ParseIntPipe) id: number, @Query('reason') reason?: string) {
+        return this.assetsService.remove(id, reason);
     }
 }

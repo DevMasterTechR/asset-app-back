@@ -177,6 +177,8 @@ model Asset {
   attributesJson   Json?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
+  deletedAt        DateTime?
+  deleteReason     String?
 
   branch         Branch?           @relation(fields: [branchId], references: [id])
   assignedPerson Person?           @relation("PersonAssets", fields: [assignedPersonId], references: [id], onDelete: SetNull)

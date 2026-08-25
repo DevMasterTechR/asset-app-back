@@ -87,7 +87,11 @@ export class PeopleService {
     // persona: algunos códigos quedaron cargados a mano con espacios
     // ("CARGL - 006"), y una comparación exacta de texto nunca los
     // encuentra contra el formato canónico que se genera aquí.
-    const todos = await this.prisma.asset.findMany({ select: { id: true, assetCode: true } });
+    // Un equipo eliminado (borrado lógico) libera su código.
+    const todos = await this.prisma.asset.findMany({
+      where: { deletedAt: null },
+      select: { id: true, assetCode: true },
+    });
 
     for (const activo of activos) {
       const nuevoCodigo = aplicarCodigoDePersona(activo.assetCode, codigo);

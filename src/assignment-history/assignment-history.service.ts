@@ -84,7 +84,7 @@ export class AssignmentHistoryService {
       // código de laptop/accesorio duplicado en el inventario.
       if (nuevoAssetCode && nuevoAssetCode !== asset.assetCode) {
         const normalizarCodigo = (c: string) => String(c || '').replace(/\s+/g, '').toUpperCase();
-        const candidatos = await this.prisma.asset.findMany({ select: { id: true, assetCode: true } });
+        const candidatos = await this.prisma.asset.findMany({ where: { deletedAt: null }, select: { id: true, assetCode: true } });
         const ocupante = candidatos.find(
           (a) => a.id !== asset.id && normalizarCodigo(a.assetCode) === normalizarCodigo(nuevoAssetCode),
         );
@@ -282,7 +282,7 @@ export class AssignmentHistoryService {
 
       if (nuevoAssetCode && nuevoAssetCode !== existing.asset.assetCode) {
         const normalizarCodigo = (c: string) => String(c || '').replace(/\s+/g, '').toUpperCase();
-        const candidatos = await this.prisma.asset.findMany({ select: { id: true, assetCode: true } });
+        const candidatos = await this.prisma.asset.findMany({ where: { deletedAt: null }, select: { id: true, assetCode: true } });
         const ocupante = candidatos.find(
           (a) => a.id !== existing.assetId && normalizarCodigo(a.assetCode) === normalizarCodigo(nuevoAssetCode),
         );
