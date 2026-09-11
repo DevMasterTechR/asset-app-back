@@ -28,6 +28,10 @@ export class PeopleService {
       }
       const persona = await this.prisma.person.create({ data });
       if (persona.codigo) {
+        // Primero se traen los activos que ya llevan ese número (se los
+        // quitamos a quien los tuviera) y después se propaga: así los recién
+        // traídos quedan también con el formato canónico del código.
+        await this.traspasarActivosDelNumero(persona.codigo, persona.id);
         await this.propagarCodigoAActivos(persona.id, persona.codigo);
       }
       return persona;
@@ -45,8 +49,10 @@ export class PeopleService {
   //     periféricos también queden bien) — así nunca hay dos personas
   //     compitiendo por el mismo número.
   //   - si no hay nada con qué intercambiar (persona nueva, sin código
-  //     anterior), se le deja uno referencial (no vacío) y no se tocan sus
-  //     activos, porque no es un número real de inventario.
+  //     anterior), se le deja uno referencial (no vacío). Sus activos NO se
+  //     renumeran: se traspasan al nuevo dueño del número (ver
+  //     traspasarActivosDelNumero, que se llama desde quien conoce al nuevo
+  //     dueño). El código no cambia; cambia el propietario.
   private async liberarCodigoSiEstaEnUso(codigo: string, exceptoPersonId?: number, codigoQueQuedaLibre?: string) {
     const otro = await this.prisma.person.findFirst({
       where: { codigo, ...(exceptoPersonId ? { id: { not: exceptoPersonId } } : {}) },
@@ -62,6 +68,79 @@ export class PeopleService {
     }
   }
 
+  /**
+   * Traspasa al nuevo dueño de un número TODOS los activos etiquetados con
+   * ese número que estén asignados a otra persona.
+   *
+   * POR QUÉ EXISTE
+   * ==============
+   * El número identifica el puesto, y los activos van con el número: si el
+   * 036 pasa de Gloria a Johana, el celular y la laptop los sincroniza
+   * HWIDApp, pero los accesorios (mouse, cargadores, soporte, mousepad…) no
+   * los conoce HWIDApp y se quedaban con la persona anterior. Resultado real
+   * en producción: 6 accesorios marcados "-036" asignados a Gloria, cuyo
+   * código de persona había pasado a ser "REF-142", mientras el 036 era de
+   * Johana. Trece activos de cinco personas terminaron así.
+   *
+   * La regla es: el código NO cambia, cambia el propietario. Se cierra la
+   * asignación anterior y se abre una nueva, para que la pantalla de
+   * Asignaciones refleje el traspaso en vez de quedarse con datos viejos.
+   *
+   * Idempotente: si ya están todos en la persona correcta, no hace nada.
+   */
+  private async traspasarActivosDelNumero(numero: string, nuevoPersonId: number): Promise<string[]> {
+    const soloDigitos = String(numero || '').replace(/\D+/g, '');
+    if (!soloDigitos) return []; // códigos referenciales (REF-…) no son números de inventario
+    const objetivo = soloDigitos.padStart(3, '0');
+
+    const candidatos = await this.prisma.asset.findMany({
+      where: { deletedAt: null, assignedPersonId: { not: null } },
+      select: { id: true, assetCode: true, assignedPersonId: true, branchId: true },
+    });
+
+    // El replace de espacios es necesario: hay códigos cargados a mano como
+    // "CARGL -091", y sin normalizar nunca coincidirían con el número.
+    const aTraspasar = candidatos.filter((a) => {
+      if (a.assignedPersonId === nuevoPersonId) return false;
+      const m = /-(\d+)$/.exec(String(a.assetCode || '').replace(/\s+/g, ''));
+      return !!m && m[1].padStart(3, '0') === objetivo;
+    });
+
+    const traspasados: string[] = [];
+    for (const a of aTraspasar) {
+      await this.prisma.asset.update({
+        where: { id: a.id },
+        data: { assignedPersonId: nuevoPersonId, status: 'assigned' },
+      });
+      await this.prisma.assignmentHistory.updateMany({
+        where: { assetId: a.id, returnDate: null },
+        data: {
+          returnDate: new Date(),
+          returnNotes: `Cerrada automáticamente: el número ${objetivo} pasó a otra persona.`,
+        },
+      });
+      await this.prisma.assignmentHistory.create({
+        data: {
+          assetId: a.id,
+          personId: nuevoPersonId,
+          branchId: a.branchId ?? undefined,
+          deliveryNotes: `Traspasado automáticamente: acompaña al número ${objetivo}.`,
+        },
+      });
+      traspasados.push(a.assetCode);
+    }
+
+    if (traspasados.length > 0) {
+      // Aviso explícito en el log: un traspaso automático mueve activos entre
+      // personas, y quien revise el inventario después tiene que poder saber
+      // por qué se movieron sin tener que reconstruirlo.
+      console.warn(
+        `[codigos] El numero ${objetivo} cambio de dueno: ${traspasados.length} activo(s) traspasado(s) a la persona ${nuevoPersonId} -> ${traspasados.join(', ')}`,
+      );
+    }
+    return traspasados;
+  }
+
   // El código que asigna HWIDApp (ej. "LAPT-406") es el código verdadero de
   // ese equipo: si el número no coincide con el que ya tenía la persona en
   // Gestor-Tech, se lo actualizamos y se propaga a sus demás activos
@@ -72,6 +151,9 @@ export class PeopleService {
     const actual = await this.prisma.person.findUnique({ where: { id: personId }, select: { codigo: true } });
     await this.liberarCodigoSiEstaEnUso(codigo, personId, actual?.codigo ?? undefined);
     await this.prisma.person.update({ where: { id: personId }, data: { codigo } });
+    // Los accesorios que HWIDApp no conoce (mouse, cargadores, soporte…) van
+    // con el número, no con la persona anterior.
+    await this.traspasarActivosDelNumero(codigo, personId);
     await this.propagarCodigoAActivos(personId, codigo);
   }
 
@@ -199,6 +281,7 @@ export class PeopleService {
       });
 
       if (payload.codigo) {
+        await this.traspasarActivosDelNumero(payload.codigo, id);
         await this.propagarCodigoAActivos(id, payload.codigo);
       }
 

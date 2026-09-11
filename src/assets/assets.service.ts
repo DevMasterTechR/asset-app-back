@@ -559,6 +559,29 @@ export class AssetsService {
             data: { assetCode: dto.assetCode, status: persona ? 'assigned' : 'available', ...datosBase },
           });
 
+      // Limpieza de duplicados por CÓDIGO (además de por serial, arriba):
+      // el intercambio de más arriba solo reubica UN "ocupante" del código
+      // de destino; si por lo que sea quedó más de uno con el mismo código
+      // normalizado (cargas a mano con espacios, un equipo eliminado en
+      // hwid-server cuyo número se le reasignó a otro sin limpiar el
+      // registro viejo, etc.), HWIDApp es la fuente de verdad para el
+      // código: cualquier otro activo que comparta el mismo código
+      // normalizado y no sea el que acabamos de crear/actualizar es
+      // incoherente y se borra solo, en cada sincronización.
+      const otrosConMismoCodigo = await this.prisma.asset.findMany({
+        where: { deletedAt: null, id: { not: activo.id } },
+        select: { id: true, assetCode: true },
+      });
+      for (const dup of otrosConMismoCodigo) {
+        if (normalizarCodigo(dup.assetCode) !== normalizarCodigo(dto.assetCode)) continue;
+        try {
+          await this.prisma.asset.delete({ where: { id: dup.id } });
+          duplicadosEliminados.push(dup.assetCode);
+        } catch {
+          duplicadosConHistorial.push(dup.assetCode);
+        }
+      }
+
       if (persona) {
         const numero = /-(\d+)$/.exec(dto.assetCode)?.[1];
         // Siempre se vuelve a propagar, aunque el código ya coincida: es
