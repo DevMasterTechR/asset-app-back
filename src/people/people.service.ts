@@ -147,13 +147,42 @@ export class PeopleService {
   // (llamado desde AssetsService.sincronizarDesdeHwid). Si el número ya lo
   // tenía otra persona, se lo intercambiamos por el que esta persona deja
   // libre, en vez de dejarlo con un valor de relleno.
+  //
+  // A PROPÓSITO ya NO llama a traspasarActivosDelNumero: esta función corre
+  // SOLA, sin que nadie la revise, cada vez que hwid-server sincroniza a
+  // cualquier persona. hwid-server no tiene forma de saber qué números ya
+  // estaban reservados a mano en Gestor-Tech (activos que nunca pasan por
+  // HWIDApp) — un número libre del lado de hwid-server puede chocar con uno
+  // ya ocupado acá, y traspasar accesorios automáticamente en ese caso le
+  // quita en silencio el equipo real a alguien que no tiene nada que ver.
+  // Pasó de verdad: se le arrebató a una persona de Guayaquil su laptop,
+  // cargador y cable para dárselos a alguien de Quevedo que coincidió con su
+  // mismo número. El traspaso de accesorios sigue existiendo (ver
+  // traspasarActivosDelNumero) pero solo se dispara desde create()/update(),
+  // donde un administrador está cambiando el código A PROPÓSITO desde el
+  // panel de Personas — nunca desde una sincronización automática.
   async establecerCodigoDesdeHwid(personId: number, codigo: string) {
     const actual = await this.prisma.person.findUnique({ where: { id: personId }, select: { codigo: true } });
-    await this.liberarCodigoSiEstaEnUso(codigo, personId, actual?.codigo ?? undefined);
+    if (actual?.codigo === codigo) return; // ya coincide, nada que hacer
+
+    // Tampoco liberarCodigoSiEstaEnUso automático: si el número ya es de
+    // OTRA persona real en Gestor-Tech, no se lo quitamos solos — eso es
+    // exactamente lo que le pasó a la persona de Guayaquil. Se deja
+    // anotado para que alguien lo resuelva a mano desde el panel de
+    // Personas (ahí sí, con un humano mirando, vale el intercambio).
+    const otro = await this.prisma.person.findFirst({
+      where: { codigo, id: { not: personId } },
+      select: { id: true, firstName: true, lastName: true },
+    });
+    if (otro) {
+      console.warn(
+        `[codigos] hwid-server le asigna el numero ${codigo} a la persona ${personId}, pero en Gestor-Tech ya es de ` +
+          `${otro.firstName} ${otro.lastName} (id ${otro.id}). No se cambia nada automatico -- resolver a mano.`,
+      );
+      return;
+    }
+
     await this.prisma.person.update({ where: { id: personId }, data: { codigo } });
-    // Los accesorios que HWIDApp no conoce (mouse, cargadores, soporte…) van
-    // con el número, no con la persona anterior.
-    await this.traspasarActivosDelNumero(codigo, personId);
     await this.propagarCodigoAActivos(personId, codigo);
   }
 
