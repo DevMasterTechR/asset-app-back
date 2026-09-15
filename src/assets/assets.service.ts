@@ -195,14 +195,25 @@ export class AssetsService {
       const existingAsset = await this.prisma.asset.findUnique({ where: { id } });
       if (!existingAsset) throw new NotFoundException(`Activo con ID ${id} no encontrado`);
 
-      // Si el activo está asignado, no permitir cambiar el estado ni la fecha de recepción
       const isAssigned = existingAsset.status === 'assigned' || !!existingAsset.assignedPersonId;
-      if (isAssigned) {
-        // Si el cliente intenta modificar el estado o la fecha de recepción
-        if ((data.status !== undefined && data.status !== existingAsset.status) || (data.receivedDate !== undefined && data.receivedDate !== null)) {
-          throw new BadRequestException('No puedes editar este dispositivo hasta que no tenga una asignación activa');
-        }
-      }
+
+      // A PROPÓSITO ya no se rechaza la edición completa de un equipo
+      // asignado.
+      //
+      // Antes, si el formulario mandaba un status distinto o una fecha de
+      // recepción, se lanzaba un error y NO se guardaba nada. El formulario
+      // manda la ficha entera en cada guardado, así que bastaba con abrirlo y
+      // corregir la fecha de compra —o marcar "¿tiene mica?"— para chocar con
+      // ese error y no poder arreglar nada mientras el equipo estuviera
+      // entregado, que es casi siempre. Es lo que impedía completar los datos
+      // del celular de una persona sin antes quitarle el equipo.
+      //
+      // La protección real está unos renglones más abajo y no cambia: en un
+      // equipo asignado se BORRAN del update status, receivedDate y
+      // assignedPersonId, así que esos tres no se pueden modificar por este
+      // camino igual. La diferencia es que ahora el resto de la ficha sí se
+      // guarda en vez de perderse todo por culpa de un campo que el
+      // formulario mandaba de relleno.
 
       // Normalizar posibles campos de fecha que vienen como strings desde el frontend
       const payload: any = { ...data };
