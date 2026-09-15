@@ -232,7 +232,17 @@ export class PeopleService {
           );
           continue;
         }
+        // En DOS pasos y en este orden: el ocupante no puede tomar el codigo
+        // del activo mientras el activo todavia lo tiene puesto (assetCode es
+        // UNICO). Primero se aparta a un temporal, despues el activo toma el
+        // suyo, y al final el ocupante recibe el que quedo libre.
+        await this.prisma.asset.update({
+          where: { id: ocupante.id },
+          data: { assetCode: `TMP-${ocupante.id}-${Date.now()}` },
+        });
+        await this.prisma.asset.update({ where: { id: activo.id }, data: { assetCode: nuevoCodigo } });
         await this.prisma.asset.update({ where: { id: ocupante.id }, data: { assetCode: activo.assetCode } });
+        continue;
       }
       await this.prisma.asset.update({ where: { id: activo.id }, data: { assetCode: nuevoCodigo } });
     }

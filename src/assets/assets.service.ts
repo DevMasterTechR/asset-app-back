@@ -663,6 +663,10 @@ export class AssetsService {
       // tenía, queda anotado en el log y lo resuelve una persona desde el
       // panel, que es donde se puede mirar antes de decidir.
       let codigoDestino = dto.assetCode;
+      // assetCode es UNICO: el ocupante no puede tomar el codigo que este
+      // equipo todavia tiene puesto. Se aparta a un temporal y recibe el
+      // definitivo despues, ya liberado.
+      let ocupanteAReubicar: { id: number; codigo: string } | undefined;
       const ocupante = candidatos.find(
         (a) => normalizarCodigo(a.assetCode) === normalizarCodigo(dto.assetCode) && a.id !== coincidencia?.id,
       );
@@ -677,7 +681,15 @@ export class AssetsService {
             ? coincidencia.assetCode.replace(/\s+/g, '')
             : `${dto.assetCode}-PENDIENTE-${Date.now()}`;
         } else if (codigoQueQuedaLibre) {
-          await this.prisma.asset.update({ where: { id: ocupante.id }, data: { assetCode: codigoQueQuedaLibre } });
+          // A un temporal y no directo a codigoQueQuedaLibre: ese codigo lo
+          // sigue teniendo puesto el equipo que estamos por actualizar, y
+          // assetCode es UNICO. El definitivo se le da despues, cuando el otro
+          // ya lo solto (ver mas abajo, tras crear/actualizar el activo).
+          await this.prisma.asset.update({
+            where: { id: ocupante.id },
+            data: { assetCode: `TMP-${ocupante.id}-${Date.now()}` },
+          });
+          ocupanteAReubicar = { id: ocupante.id, codigo: codigoQueQuedaLibre };
         } else {
           // Sin dueño y sin un código que darle a cambio: se aparta para no
           // bloquear el número, y queda visible que hay que revisarlo.
@@ -716,6 +728,15 @@ export class AssetsService {
         : await this.prisma.asset.create({
             data: { assetCode: codigoDestino, status: persona ? 'assigned' : 'available', ...datosBase },
           });
+
+      // El equipo ya tomo su codigo: recien ahora el ocupante puede quedarse
+      // con el que solto, sin chocar contra el indice unico.
+      if (ocupanteAReubicar) {
+        await this.prisma.asset.update({
+          where: { id: ocupanteAReubicar.id },
+          data: { assetCode: ocupanteAReubicar.codigo },
+        });
+      }
 
       // Limpieza de duplicados por CÓDIGO (además de por serial, arriba):
       // el intercambio de más arriba solo reubica UN "ocupante" del código

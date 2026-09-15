@@ -76,38 +76,54 @@ export class AssignmentHistoryService {
 
       // Si la persona tiene un código propio (ej. "406"), el activo lo
       // hereda manteniendo su prefijo (LAPT-001 -> LAPT-406).
-      // let y no const: si el codigo de destino resulta ser de un tercero, se
-      // anula mas abajo en vez de quitarselo.
-      let nuevoAssetCode = person.codigo ? aplicarCodigoDePersona(asset.assetCode, person.codigo) : undefined;
+      const codigoHeredado = person.codigo ? aplicarCodigoDePersona(asset.assetCode, person.codigo) : undefined;
+
+      // Queda en undefined mientras no se confirme que el código se puede usar
+      // de verdad: si lo tiene un tercero, el equipo conserva el suyo.
+      let nuevoAssetCode: string | undefined;
+      // assetCode es ÚNICO, así que el ocupante NO puede tomar el código del
+      // equipo mientras el equipo todavía lo tiene: se lo damos después, ya
+      // fuera de la transacción que lo libera.
+      let ocupanteAReubicar: { id: number; codigo: string } | undefined;
 
       // Si ese código ya lo tiene OTRO activo (de otra persona), se lo
       // intercambiamos por el que este activo está dejando libre — mismo
       // criterio que en la sincronización con HWIDApp: nunca debe quedar un
       // código de laptop/accesorio duplicado en el inventario.
-      if (nuevoAssetCode && nuevoAssetCode !== asset.assetCode) {
+      if (codigoHeredado && codigoHeredado !== asset.assetCode) {
         const normalizarCodigo = (c: string) => String(c || '').replace(/\s+/g, '').toUpperCase();
         const candidatos = await this.prisma.asset.findMany({
           where: { deletedAt: null },
           select: { id: true, assetCode: true, assignedPersonId: true },
         });
         const ocupante = candidatos.find(
-          (a) => a.id !== asset.id && normalizarCodigo(a.assetCode) === normalizarCodigo(nuevoAssetCode),
+          (a) => a.id !== asset.id && normalizarCodigo(a.assetCode) === normalizarCodigo(codigoHeredado),
         );
-        if (ocupante) {
+
+        if (!ocupante) {
+          nuevoAssetCode = codigoHeredado;
+        } else if (ocupante.assignedPersonId != null && ocupante.assignedPersonId !== data.personId) {
           // NO se le quita el numero al equipo de un tercero. Renumerar en
           // silencio el equipo de otra persona fue lo que encadeno los
           // incidentes de codigos cruzados; misma regla que ya rige en
           // AssetsService.sincronizarDesdeHwid y en propagarCodigoAActivos.
-          const esDeUnTercero =
-            ocupante.assignedPersonId != null && ocupante.assignedPersonId !== data.personId;
-          if (esDeUnTercero) {
-            console.warn(
-              `[codigos] No se renumera ${asset.assetCode} a ${nuevoAssetCode}: ese codigo lo tiene el equipo id ${ocupante.id} de la persona ${ocupante.assignedPersonId}. La asignacion sigue, pero el codigo no cambia.`,
-            );
-            nuevoAssetCode = undefined;
-          } else {
-            await this.prisma.asset.update({ where: { id: ocupante.id }, data: { assetCode: asset.assetCode } });
-          }
+          // La asignacion se hace igual: lo que no cambia es el codigo.
+          console.warn(
+            `[codigos] No se renumera ${asset.assetCode} a ${codigoHeredado}: ese codigo lo tiene el equipo id ${ocupante.id} de la persona ${ocupante.assignedPersonId}. La asignacion sigue, pero el codigo no cambia.`,
+          );
+        } else {
+          // Intercambio en TRES pasos. Darle aqui mismo al ocupante el codigo
+          // del equipo reventaba con P2002 ("Historial duplicado" en la
+          // pantalla, aunque el choque no tenia nada que ver con el
+          // historial): el equipo todavia lo tiene puesto. Se aparta a un
+          // codigo temporal, el equipo toma el suyo en la transaccion de mas
+          // abajo, y recien entonces el ocupante recibe el que quedo libre.
+          await this.prisma.asset.update({
+            where: { id: ocupante.id },
+            data: { assetCode: `TMP-${ocupante.id}-${Date.now()}` },
+          });
+          ocupanteAReubicar = { id: ocupante.id, codigo: asset.assetCode };
+          nuevoAssetCode = codigoHeredado;
         }
       }
 
@@ -133,6 +149,15 @@ export class AssignmentHistoryService {
           },
         }),
       ]);
+
+      // El equipo ya solto su codigo viejo en la transaccion de arriba: recien
+      // ahora el ocupante lo puede tomar sin chocar contra el indice unico.
+      if (ocupanteAReubicar) {
+        await this.prisma.asset.update({
+          where: { id: ocupanteAReubicar.id },
+          data: { assetCode: ocupanteAReubicar.codigo },
+        });
+      }
 
       // Devolver tanto el assignmentHistory creado (con relaciones) como el asset actualizado
 
