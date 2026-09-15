@@ -201,7 +201,8 @@ export class PeopleService {
     // Un equipo eliminado (borrado lógico) libera su código.
     const todos = await this.prisma.asset.findMany({
       where: { deletedAt: null },
-      select: { id: true, assetCode: true },
+      // assignedPersonId hace falta para no renumerar el equipo de un tercero.
+      select: { id: true, assetCode: true, assignedPersonId: true },
     });
 
     for (const activo of activos) {
@@ -209,13 +210,28 @@ export class PeopleService {
       if (nuevoCodigo === activo.assetCode) continue;
 
       // El código del tipo (ej. "CARGL-006") es único: si ya lo tiene OTRO
-      // activo (de alguien más, cargado a mano o de otra fuente), se le da
-      // el código que este activo está dejando libre — intercambio
-      // automático, igual que con el equipo principal en sincronizarDesdeHwid.
+      // activo hay que apartarlo antes. Pero SOLO si no es de otra persona.
+      //
+      // Renumerar el equipo de un tercero fue el eslabón que encadenó los
+      // incidentes: al mover a alguien de número, los accesorios de quien ya
+      // usaba el número de destino quedaban renumerados en silencio y
+      // aparecían bajo una persona que nunca los recibió. Pasó con tres
+      // personas seguidas por efecto dominó.
+      //
+      // Si el ocupante es de un tercero, este activo se queda con su código y
+      // queda anotado: lo resuelve una persona desde el panel.
       const ocupante = todos.find(
         (a) => a.id !== activo.id && normalizarCodigo(a.assetCode) === normalizarCodigo(nuevoCodigo),
       );
       if (ocupante) {
+        const esDeUnTercero =
+          ocupante.assignedPersonId != null && ocupante.assignedPersonId !== personId;
+        if (esDeUnTercero) {
+          console.warn(
+            `[codigos] No se renumera ${activo.assetCode} a ${nuevoCodigo}: ese codigo lo tiene el equipo id ${ocupante.id} de la persona ${ocupante.assignedPersonId}. Resolver a mano.`,
+          );
+          continue;
+        }
         await this.prisma.asset.update({ where: { id: ocupante.id }, data: { assetCode: activo.assetCode } });
       }
       await this.prisma.asset.update({ where: { id: activo.id }, data: { assetCode: nuevoCodigo } });

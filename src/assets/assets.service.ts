@@ -401,16 +401,62 @@ export class AssetsService {
       const duplicadosConHistorial: string[] = [];
 
       const serial = dto.serialNumber?.trim();
+
+      // EL SERIAL ES LA IDENTIDAD FÍSICA DEL EQUIPO
+      // ===========================================
+      // serialNumber es el IMEI en celulares y el número de serie en PCs: si
+      // coincide, es EL MISMO objeto, venga con el código que venga y esté o
+      // no dado de baja.
+      //
+      // Antes, todo registro con el mismo serial y distinto código se borraba
+      // EN DURO. Eso destruía dos cosas: el historial de un equipo que
+      // simplemente volvía (la consulta ni siquiera excluía los dados de
+      // baja) y el registro que alguien hubiera cargado a mano con otro
+      // código. Ahora se REUTILIZA el registro que ya existe, y si hubiera
+      // varios, los sobrantes se dan de baja lógica en vez de borrarse.
+      let mismoSerial: { id: number; assetCode: string } | undefined;
       if (serial) {
-        const duplicados = await this.prisma.asset.findMany({
-          where: { serialNumber: serial, assetCode: { not: dto.assetCode } },
+        const conMismoSerial = await this.prisma.asset.findMany({
+          where: { serialNumber: serial },
+          select: { id: true, assetCode: true, deletedAt: true },
         });
-        for (const dup of duplicados) {
-          try {
-            await this.prisma.asset.delete({ where: { id: dup.id } });
-            duplicadosEliminados.push(dup.assetCode);
-          } catch {
-            duplicadosConHistorial.push(dup.assetCode);
+        // Se prefiere uno activo; si todos están dados de baja, se revive el
+        // primero: el equipo volvió y merece seguir su propia historia en vez
+        // de empezar una nueva en blanco.
+        const preferido = conMismoSerial.find((a) => !a.deletedAt) ?? conMismoSerial[0];
+        if (preferido) {
+          mismoSerial = { id: preferido.id, assetCode: preferido.assetCode };
+          if (preferido.deletedAt) {
+            console.warn(
+              `[inventario] El equipo con serial ${serial} estaba dado de baja y volvio a aparecer en HWIDApp: se reactiva el registro ${preferido.assetCode} (id ${preferido.id}) en vez de crear otro.`,
+            );
+            await this.prisma.asset.update({
+              where: { id: preferido.id },
+              data: { deletedAt: null, deleteReason: null },
+            });
+          }
+          for (const extra of conMismoSerial) {
+            if (extra.id === preferido.id || extra.deletedAt) continue;
+            await this.prisma.assignmentHistory.updateMany({
+              where: { assetId: extra.id, returnDate: null },
+              data: {
+                returnDate: new Date(),
+                returnNotes: `Cerrada automaticamente: registro duplicado del equipo con serial ${serial}.`,
+              },
+            });
+            await this.prisma.asset.update({
+              where: { id: extra.id },
+              data: {
+                deletedAt: new Date(),
+                deleteReason: `Registro duplicado: ya existe otro equipo con el serial ${serial}.`,
+                assignedPersonId: null,
+                status: 'decommissioned',
+                // assetCode es ÚNICO aunque el equipo esté dado de baja: si no
+                // se le cambia, sigue bloqueando ese código para siempre.
+                assetCode: `${extra.assetCode}-BAJA-${extra.id}`,
+              },
+            });
+            duplicadosEliminados.push(extra.assetCode);
           }
         }
       }
@@ -498,7 +544,9 @@ export class AssetsService {
       const normalizarCodigo = (c: string) => String(c || '').replace(/\s+/g, '').toUpperCase();
       const candidatos = await this.prisma.asset.findMany({
         where: { deletedAt: null },
-        select: { id: true, assetCode: true },
+        // assignedPersonId hace falta para no quitarle el número al equipo de
+        // un tercero (ver más abajo).
+        select: { id: true, assetCode: true, assignedPersonId: true },
       });
       let coincidencia: { id: number; assetCode: string } | undefined;
 
@@ -509,17 +557,65 @@ export class AssetsService {
       // error el equipo de OTRA persona que coincidía de casualidad en el
       // número (así se mezclaron los equipos de Zoila y Jair al compartir el
       // número 006 sin ninguna relación real entre ellos).
-      if (persona) {
+      // PRIORIDAD 1: el serial. Es la identidad física, así que manda sobre
+      // cualquier otra pista.
+      if (mismoSerial) coincidencia = mismoSerial;
+
+      if (!coincidencia && persona) {
         // assetType es texto libre (viene de un lado con "Laptop", de otro
         // con "laptop"): comparación insensible a mayúsculas/minúsculas,
         // para que una diferencia de formato no le haga fallar esta
         // búsqueda y termine agarrando por error el equipo de otra persona
         // (fue exactamente lo que pasó: "laptop" vs "Laptop").
         const propio = await this.prisma.asset.findFirst({
-          where: { assignedPersonId: persona.id, assetType: { equals: dto.assetType, mode: 'insensitive' } },
-          select: { id: true, assetCode: true },
+          where: {
+            assignedPersonId: persona.id,
+            assetType: { equals: dto.assetType, mode: 'insensitive' },
+            deletedAt: null,
+          },
+          select: { id: true, assetCode: true, serialNumber: true },
         });
-        if (propio) coincidencia = propio;
+        if (propio) {
+          const serialViejo = propio.serialNumber?.trim();
+          // ES OTRO EQUIPO, NO EL MISMO
+          // ===========================
+          // Si los dos tienen serial y no coinciden, son objetos físicos
+          // distintos: la persona cambió de equipo. Antes esta fila se
+          // REUTILIZABA y se le encima escribían los datos del equipo nuevo,
+          // así que el anterior desaparecía sin dejar rastro — fue lo que
+          // borró la marca, el modelo y el IMEI de un Samsung al registrarse
+          // el Xiaomi que lo reemplazó.
+          //
+          // Ahora el anterior se da de BAJA LÓGICA (conserva su historial) y
+          // el nuevo se crea aparte. Si algún día vuelve, el bloque del
+          // serial de más arriba lo reactiva en vez de duplicarlo.
+          const esOtroEquipo = !!serial && !!serialViejo && serial !== serialViejo;
+          if (esOtroEquipo) {
+            console.warn(
+              `[inventario] ${dto.assetType} nuevo para la persona ${persona.id}: el anterior (${propio.assetCode}, serial ${serialViejo}) se da de baja y se conserva su historial.`,
+            );
+            await this.prisma.assignmentHistory.updateMany({
+              where: { assetId: propio.id, returnDate: null },
+              data: {
+                returnDate: new Date(),
+                returnNotes: 'Cerrada automaticamente: la persona recibio un equipo nuevo de este tipo.',
+              },
+            });
+            await this.prisma.asset.update({
+              where: { id: propio.id },
+              data: {
+                deletedAt: new Date(),
+                deleteReason: `Reemplazado por un equipo nuevo del mismo tipo (serial ${serial}).`,
+                assignedPersonId: null,
+                status: 'decommissioned',
+                assetCode: `${propio.assetCode}-BAJA-${propio.id}`,
+              },
+            });
+            duplicadosEliminados.push(propio.assetCode);
+          } else {
+            coincidencia = { id: propio.id, assetCode: propio.assetCode };
+          }
+        }
       }
 
       // Si no hay persona, o no tiene nada de ese tipo todavía: comparación
@@ -541,22 +637,70 @@ export class AssetsService {
         coincidencia && normalizarCodigo(coincidencia.assetCode) !== normalizarCodigo(dto.assetCode)
           ? coincidencia.assetCode.replace(/\s+/g, '') // de paso, formato canónico sin espacios
           : undefined;
-      if (codigoQueQuedaLibre) {
-        const ocupante = candidatos.find(
-          (a) => normalizarCodigo(a.assetCode) === normalizarCodigo(dto.assetCode) && a.id !== coincidencia?.id,
-        );
-        if (ocupante) {
+      // ¿Se puede usar el código que manda HWIDApp, o ya lo tiene otro equipo?
+      //
+      // Antes se le quitaba el número al ocupante FUERA DE QUIEN FUERA. Eso
+      // encadenó los incidentes: al pasar una persona a un número que otra ya
+      // usaba, los equipos del tercero quedaban renumerados en silencio y
+      // terminaban listados bajo alguien que nunca los recibió.
+      //
+      // Ahora solo se aparta un equipo SIN dueño o de la MISMA persona. Si es
+      // de un tercero no se toca: este equipo conserva el código que ya
+      // tenía, queda anotado en el log y lo resuelve una persona desde el
+      // panel, que es donde se puede mirar antes de decidir.
+      let codigoDestino = dto.assetCode;
+      const ocupante = candidatos.find(
+        (a) => normalizarCodigo(a.assetCode) === normalizarCodigo(dto.assetCode) && a.id !== coincidencia?.id,
+      );
+      if (ocupante) {
+        const esDeUnTercero =
+          ocupante.assignedPersonId != null && ocupante.assignedPersonId !== persona?.id;
+        if (esDeUnTercero) {
+          console.warn(
+            `[codigos] HWIDApp pide el codigo ${dto.assetCode}, pero lo tiene el equipo ${ocupante.assetCode} (id ${ocupante.id}) de la persona ${ocupante.assignedPersonId}. No se le quita: resolver a mano.`,
+          );
+          codigoDestino = coincidencia
+            ? coincidencia.assetCode.replace(/\s+/g, '')
+            : `${dto.assetCode}-PENDIENTE-${Date.now()}`;
+        } else if (codigoQueQuedaLibre) {
           await this.prisma.asset.update({ where: { id: ocupante.id }, data: { assetCode: codigoQueQuedaLibre } });
+        } else {
+          // Sin dueño y sin un código que darle a cambio: se aparta para no
+          // bloquear el número, y queda visible que hay que revisarlo.
+          await this.prisma.asset.update({
+            where: { id: ocupante.id },
+            data: { assetCode: `${ocupante.assetCode}-LIBRE-${ocupante.id}` },
+          });
         }
+      }
+
+      // attributesJson se FUSIONA con lo que ya había, no lo reemplaza.
+      // HWIDApp solo conoce parte de la ficha (IMEI, chip, operadora, cpu,
+      // ram, color); el resto lo marca una persona en Gestor-Tech: ¿tiene
+      // mica?, ¿estuche?, ¿cargador?, y los accesorios enlazados. Al escribir
+      // el objeto entero, cada sincronización borraba todo eso en silencio.
+      if (dto.attributesJson) {
+        const previos = coincidencia
+          ? (
+              await this.prisma.asset.findUnique({
+                where: { id: coincidencia.id },
+                select: { attributesJson: true },
+              })
+            )?.attributesJson
+          : null;
+        datosBase.attributesJson = {
+          ...((previos as Record<string, any>) || {}),
+          ...(dto.attributesJson as Record<string, any>),
+        };
       }
 
       const activo = coincidencia
         ? await this.prisma.asset.update({
             where: { id: coincidencia.id },
-            data: { ...datosBase, assetCode: dto.assetCode },
+            data: { ...datosBase, assetCode: codigoDestino },
           })
         : await this.prisma.asset.create({
-            data: { assetCode: dto.assetCode, status: persona ? 'assigned' : 'available', ...datosBase },
+            data: { assetCode: codigoDestino, status: persona ? 'assigned' : 'available', ...datosBase },
           });
 
       // Limpieza de duplicados por CÓDIGO (además de por serial, arriba):
@@ -570,20 +714,48 @@ export class AssetsService {
       // incoherente y se borra solo, en cada sincronización.
       const otrosConMismoCodigo = await this.prisma.asset.findMany({
         where: { deletedAt: null, id: { not: activo.id } },
-        select: { id: true, assetCode: true },
+        select: { id: true, assetCode: true, assignedPersonId: true },
       });
       for (const dup of otrosConMismoCodigo) {
-        if (normalizarCodigo(dup.assetCode) !== normalizarCodigo(dto.assetCode)) continue;
-        try {
-          await this.prisma.asset.delete({ where: { id: dup.id } });
-          duplicadosEliminados.push(dup.assetCode);
-        } catch {
+        if (normalizarCodigo(dup.assetCode) !== normalizarCodigo(codigoDestino)) continue;
+        // Un equipo que está en manos de OTRA persona no es un duplicado
+        // nuestro que se pueda descartar: es el inventario de alguien. Se
+        // anota y se deja quieto.
+        if (dup.assignedPersonId != null && dup.assignedPersonId !== persona?.id) {
+          console.warn(
+            `[codigos] El codigo ${dup.assetCode} (id ${dup.id}) es de la persona ${dup.assignedPersonId}: no se elimina. Resolver a mano.`,
+          );
           duplicadosConHistorial.push(dup.assetCode);
+          continue;
         }
+        // Baja LÓGICA, no borrado: el historial de quién lo tuvo se conserva,
+        // y si el equipo vuelve a aparecer se reactiva (ver el bloque del
+        // serial, arriba).
+        await this.prisma.assignmentHistory.updateMany({
+          where: { assetId: dup.id, returnDate: null },
+          data: {
+            returnDate: new Date(),
+            returnNotes: `Cerrada automaticamente: registro duplicado del codigo ${codigoDestino}.`,
+          },
+        });
+        await this.prisma.asset.update({
+          where: { id: dup.id },
+          data: {
+            deletedAt: new Date(),
+            deleteReason: `Registro duplicado del codigo ${codigoDestino}, reemplazado por el que envia HWIDApp.`,
+            assignedPersonId: null,
+            status: 'decommissioned',
+            assetCode: `${dup.assetCode}-BAJA-${dup.id}`,
+          },
+        });
+        duplicadosEliminados.push(dup.assetCode);
       }
 
       if (persona) {
-        const numero = /-(\d+)$/.exec(dto.assetCode)?.[1];
+        // Del código REALMENTE aplicado, no del pedido: si quedó apartado por
+        // un choque, el regex no casa, no hay número y no se propaga nada —
+        // que es justo lo que se quiere mientras el choque no se resuelva.
+        const numero = /-(\d+)$/.exec(codigoDestino)?.[1];
         // Siempre se vuelve a propagar, aunque el código ya coincida: es
         // idempotente (aplicarCodigoDePersona no toca lo que ya está bien) y
         // así, si algún activo se quedó "pegado" con el número viejo por
