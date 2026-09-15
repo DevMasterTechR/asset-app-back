@@ -76,7 +76,9 @@ export class AssignmentHistoryService {
 
       // Si la persona tiene un código propio (ej. "406"), el activo lo
       // hereda manteniendo su prefijo (LAPT-001 -> LAPT-406).
-      const nuevoAssetCode = person.codigo ? aplicarCodigoDePersona(asset.assetCode, person.codigo) : undefined;
+      // let y no const: si el codigo de destino resulta ser de un tercero, se
+      // anula mas abajo en vez de quitarselo.
+      let nuevoAssetCode = person.codigo ? aplicarCodigoDePersona(asset.assetCode, person.codigo) : undefined;
 
       // Si ese código ya lo tiene OTRO activo (de otra persona), se lo
       // intercambiamos por el que este activo está dejando libre — mismo
@@ -84,12 +86,28 @@ export class AssignmentHistoryService {
       // código de laptop/accesorio duplicado en el inventario.
       if (nuevoAssetCode && nuevoAssetCode !== asset.assetCode) {
         const normalizarCodigo = (c: string) => String(c || '').replace(/\s+/g, '').toUpperCase();
-        const candidatos = await this.prisma.asset.findMany({ where: { deletedAt: null }, select: { id: true, assetCode: true } });
+        const candidatos = await this.prisma.asset.findMany({
+          where: { deletedAt: null },
+          select: { id: true, assetCode: true, assignedPersonId: true },
+        });
         const ocupante = candidatos.find(
           (a) => a.id !== asset.id && normalizarCodigo(a.assetCode) === normalizarCodigo(nuevoAssetCode),
         );
         if (ocupante) {
-          await this.prisma.asset.update({ where: { id: ocupante.id }, data: { assetCode: asset.assetCode } });
+          // NO se le quita el numero al equipo de un tercero. Renumerar en
+          // silencio el equipo de otra persona fue lo que encadeno los
+          // incidentes de codigos cruzados; misma regla que ya rige en
+          // AssetsService.sincronizarDesdeHwid y en propagarCodigoAActivos.
+          const esDeUnTercero =
+            ocupante.assignedPersonId != null && ocupante.assignedPersonId !== data.personId;
+          if (esDeUnTercero) {
+            console.warn(
+              `[codigos] No se renumera ${asset.assetCode} a ${nuevoAssetCode}: ese codigo lo tiene el equipo id ${ocupante.id} de la persona ${ocupante.assignedPersonId}. La asignacion sigue, pero el codigo no cambia.`,
+            );
+            nuevoAssetCode = undefined;
+          } else {
+            await this.prisma.asset.update({ where: { id: ocupante.id }, data: { assetCode: asset.assetCode } });
+          }
         }
       }
 
