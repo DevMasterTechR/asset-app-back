@@ -293,6 +293,23 @@ export class AssetsService {
         where: { assetId: id, returnDate: null },
         data: { returnDate: new Date(), returnNotes: `Eliminado del inventario: ${motivo}` },
       });
+
+      // Al dar de baja hay que SOLTAR el codigo. assetCode es UNICO aunque el
+      // equipo este dado de baja, asi que un equipo muerto seguia bloqueando
+      // su numero para siempre: al reemplazarlo, el nuevo no podia tomar el
+      // codigo que le corresponde y terminaba con uno inventado o con
+      // espacios. Paso de verdad con el cargador y el cable de un celular
+      // Samsung que se reemplazo por uno Xiaomi.
+      //
+      // El sufijo deja ver de donde venia, que es lo que se quiere conservar
+      // de un equipo dado de baja: su historia, no su numero.
+      const actual = await this.prisma.asset.findUnique({
+        where: { id },
+        select: { assetCode: true },
+      });
+      const codigoLiberado =
+        actual && !actual.assetCode.includes('-BAJA-') ? `${actual.assetCode}-BAJA-${id}` : undefined;
+
       return await this.prisma.asset.update({
         where: { id },
         data: {
@@ -300,6 +317,7 @@ export class AssetsService {
           deleteReason: motivo,
           assignedPersonId: null,
           status: 'decommissioned',
+          ...(codigoLiberado ? { assetCode: codigoLiberado } : {}),
         },
       });
     } catch (error) {
