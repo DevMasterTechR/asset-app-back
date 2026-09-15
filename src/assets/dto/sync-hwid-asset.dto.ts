@@ -50,6 +50,11 @@ export class SyncHwidAssetDto {
     @IsString()
     departamento?: string;
 
+    @ApiPropertyOptional({ description: 'Observación libre que escribió la persona en HWIDApp' })
+    @IsOptional()
+    @IsString()
+    notes?: string;
+
     @ApiPropertyOptional({ description: 'Resto de la ficha técnica (CPU, RAM, discos, etc.)', type: Object })
     @IsOptional()
     @IsObject()

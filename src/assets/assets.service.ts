@@ -539,6 +539,9 @@ export class AssetsService {
         brand: dto.brand?.trim() || undefined,
         model: dto.model?.trim() || undefined,
         attributesJson: dto.attributesJson || undefined,
+        // Solo si la persona escribió algo: una nota vacía no debe borrar la
+        // que alguien haya puesto a mano en Gestor-Tech.
+        ...(dto.notes?.trim() ? { notes: dto.notes.trim() } : {}),
         ...(branchId !== undefined ? { branchId } : {}),
         ...(persona ? { assignedPersonId: persona.id, status: 'assigned' as const } : {}),
       };
