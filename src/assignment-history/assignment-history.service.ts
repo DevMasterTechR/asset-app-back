@@ -57,12 +57,16 @@ export class AssignmentHistoryService {
       const person = await this.prisma.person.findUnique({ where: { id: data.personId } });
       if (!person) throw new NotFoundException(`Persona con ID ${data.personId} no encontrada`);
 
-      // Definir sucursal priorizando payload -> asset -> persona
+      // LA SUCURSAL LA MANDA LA PERSONA, no el formulario ni el equipo.
+      //
+      // Un equipo esta donde esta quien lo usa. Antes ganaba lo que viniera en
+      // el payload, asi que se podia entregar un equipo "en Quito Sur" a
+      // alguien de Sangolqui y esa persona terminaba figurando en dos
+      // sucursales a la vez. Solo si la persona no tiene sucursal cargada se
+      // recurre a lo que venga en el formulario o a la del equipo.
       const incomingBranchId = this.normalizeBranchId(data.branchId);
       const resolvedBranchId =
-        incomingBranchId !== undefined
-          ? incomingBranchId
-          : asset.branchId ?? person.branchId ?? undefined;
+        person.branchId ?? incomingBranchId ?? asset.branchId ?? undefined;
 
       const isReassignment = asset.status === 'assigned';
       const reassignmentNote = isReassignment
@@ -157,6 +161,30 @@ export class AssignmentHistoryService {
           where: { id: ocupanteAReubicar.id },
           data: { assetCode: ocupanteAReubicar.codigo },
         });
+      }
+
+      // Y el resto de sus equipos se alinean con ella: si esta asignacion es
+      // la primera despues de un cambio de sucursal, los demas seguian en la
+      // anterior.
+      // En linea y no via PeopleService: inyectarlo aqui crearia una
+      // dependencia circular entre modulos por una operacion de tres lineas.
+      if (person.branchId) {
+        const suyos = await this.prisma.asset.findMany({
+          where: { assignedPersonId: data.personId, deletedAt: null },
+          select: { id: true, branchId: true },
+        });
+        const desalineados = suyos.filter((e) => e.branchId !== person.branchId).map((e) => e.id);
+        if (desalineados.length > 0) {
+          await this.prisma.asset.updateMany({
+            where: { id: { in: desalineados } },
+            data: { branchId: person.branchId },
+          });
+          // Solo las entregas ABIERTAS: las cerradas son lo que ya se firmo.
+          await this.prisma.assignmentHistory.updateMany({
+            where: { assetId: { in: desalineados }, returnDate: null },
+            data: { branchId: person.branchId },
+          });
+        }
       }
 
       // Devolver tanto el assignmentHistory creado (con relaciones) como el asset actualizado
