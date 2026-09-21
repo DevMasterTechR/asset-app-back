@@ -23,15 +23,18 @@ export class PeopleService {
         data.password = await bcrypt.hash(data.password, salt);
       }
 
+      let desplazadoId: number | null = null;
       if (data.codigo) {
-        await this.liberarCodigoSiEstaEnUso(data.codigo, undefined, undefined);
+        desplazadoId = await this.liberarCodigoSiEstaEnUso(data.codigo, undefined, undefined);
       }
       const persona = await this.prisma.person.create({ data });
       if (persona.codigo) {
         // Primero se traen los activos que ya llevan ese número (se los
         // quitamos a quien los tuviera) y después se propaga: así los recién
         // traídos quedan también con el formato canónico del código.
-        await this.traspasarActivosDelNumero(persona.codigo, persona.id);
+        if (desplazadoId) {
+          await this.traspasarActivosDelNumero(persona.codigo, persona.id, desplazadoId);
+        }
         await this.propagarCodigoAActivos(persona.id, persona.codigo);
       }
       return persona;
@@ -53,19 +56,33 @@ export class PeopleService {
   //     renumeran: se traspasan al nuevo dueño del número (ver
   //     traspasarActivosDelNumero, que se llama desde quien conoce al nuevo
   //     dueño). El código no cambia; cambia el propietario.
-  private async liberarCodigoSiEstaEnUso(codigo: string, exceptoPersonId?: number, codigoQueQuedaLibre?: string) {
+  private async liberarCodigoSiEstaEnUso(
+    codigo: string,
+    exceptoPersonId?: number,
+    codigoQueQuedaLibre?: string,
+  ): Promise<number | null> {
     const otro = await this.prisma.person.findFirst({
       where: { codigo, ...(exceptoPersonId ? { id: { not: exceptoPersonId } } : {}) },
       select: { id: true },
     });
-    if (!otro) return;
+    if (!otro) return null;
 
     if (codigoQueQuedaLibre) {
+      // INTERCAMBIO: el desplazado se queda con el número que esta persona
+      // libera, y sus activos se RENUMERAN a ese número. No hay nada que
+      // traspasar: los equipos siguen siendo suyos.
       await this.prisma.person.update({ where: { id: otro.id }, data: { codigo: codigoQueQuedaLibre } });
       await this.propagarCodigoAActivos(otro.id, codigoQueQuedaLibre);
-    } else {
-      await this.prisma.person.update({ where: { id: otro.id }, data: { codigo: `REF-${otro.id}` } });
+      return null;
     }
+
+    // Sin intercambio: el desplazado queda con un código referencial y sus
+    // activos conservan el número viejo. Solo ESOS deben seguir al nuevo
+    // dueño del número. Devolvemos su id para que el traspaso se limite a
+    // ellos: los equipos de terceros que casualmente lleven el mismo número
+    // no se tocan nunca.
+    await this.prisma.person.update({ where: { id: otro.id }, data: { codigo: `REF-${otro.id}` } });
+    return otro.id;
   }
 
   /**
@@ -88,13 +105,22 @@ export class PeopleService {
    *
    * Idempotente: si ya están todos en la persona correcta, no hace nada.
    */
-  private async traspasarActivosDelNumero(numero: string, nuevoPersonId: number): Promise<string[]> {
+  private async traspasarActivosDelNumero(
+    numero: string,
+    nuevoPersonId: number,
+    soloDePersonaId: number,
+  ): Promise<string[]> {
     const soloDigitos = String(numero || '').replace(/\D+/g, '');
     if (!soloDigitos) return []; // códigos referenciales (REF-…) no son números de inventario
+    // Sin un dueño anterior concreto no se traspasa NADA. Esta guarda es la
+    // que impide repetir el incidente del 11-sep-2026, cuando el traspaso
+    // barrió por número y movió 146 equipos de 24 personas que no tenían
+    // ninguna relación con el cambio de código.
+    if (!soloDePersonaId) return [];
     const objetivo = soloDigitos.padStart(3, '0');
 
     const candidatos = await this.prisma.asset.findMany({
-      where: { deletedAt: null, assignedPersonId: { not: null } },
+      where: { deletedAt: null, assignedPersonId: soloDePersonaId },
       select: { id: true, assetCode: true, assignedPersonId: true, branchId: true },
     });
 
@@ -358,9 +384,10 @@ export class PeopleService {
         }
       }
 
+      let desplazadoId: number | null = null;
       if (payload.codigo) {
         const actual = await this.prisma.person.findUnique({ where: { id }, select: { codigo: true } });
-        await this.liberarCodigoSiEstaEnUso(payload.codigo, id, actual?.codigo ?? undefined);
+        desplazadoId = await this.liberarCodigoSiEstaEnUso(payload.codigo, id, actual?.codigo ?? undefined);
       }
 
       const actualizada = await this.prisma.person.update({
@@ -369,7 +396,9 @@ export class PeopleService {
       });
 
       if (payload.codigo) {
-        await this.traspasarActivosDelNumero(payload.codigo, id);
+        if (desplazadoId) {
+          await this.traspasarActivosDelNumero(payload.codigo, id, desplazadoId);
+        }
         await this.propagarCodigoAActivos(id, payload.codigo);
       }
 
