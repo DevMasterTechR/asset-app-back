@@ -248,6 +248,39 @@ export class PeopleService {
     }
   }
 
+  /**
+   * Lleva los equipos de una persona a su sucursal.
+   *
+   * Una persona esta en UNA sucursal, y sus equipos estan donde esta ella. Al
+   * cambiarla de sucursal, sus equipos y sus entregas abiertas se quedaban en
+   * la anterior: en la pantalla de Asignaciones la misma persona aparecia con
+   * equipos en dos sucursales distintas, lo cual no existe en la realidad.
+   *
+   * Solo se tocan las asignaciones ABIERTAS. Las cerradas son el registro de
+   * una entrega que ya ocurrio -- varias estan impresas en actas firmadas -- y
+   * reescribirlas seria falsear lo que se firmo ese dia.
+   */
+  async alinearSucursalDeSusEquipos(personId: number, branchId: number) {
+    const equipos = await this.prisma.asset.findMany({
+      where: { assignedPersonId: personId, deletedAt: null },
+      select: { id: true, branchId: true },
+    });
+    const desalineados = equipos.filter((e) => e.branchId !== branchId).map((e) => e.id);
+    if (desalineados.length === 0) return;
+
+    await this.prisma.asset.updateMany({
+      where: { id: { in: desalineados } },
+      data: { branchId },
+    });
+    await this.prisma.assignmentHistory.updateMany({
+      where: { assetId: { in: desalineados }, returnDate: null },
+      data: { branchId },
+    });
+    console.warn(
+      `[sucursales] La persona ${personId} cambio de sucursal: ${desalineados.length} equipo(s) y sus entregas abiertas pasan a la sucursal ${branchId}.`,
+    );
+  }
+
   // Obtener todas las personas con soporte de búsqueda y paginación
   async findAll(q?: string, page = 1, limit = 999999) {
     const where: any = {};
@@ -338,6 +371,11 @@ export class PeopleService {
       if (payload.codigo) {
         await this.traspasarActivosDelNumero(payload.codigo, id);
         await this.propagarCodigoAActivos(id, payload.codigo);
+      }
+
+      // Si se la movio de sucursal, sus equipos se mudan con ella.
+      if (payload.branchId !== undefined && payload.branchId !== null) {
+        await this.alinearSucursalDeSusEquipos(id, Number(payload.branchId));
       }
 
       return actualizada;

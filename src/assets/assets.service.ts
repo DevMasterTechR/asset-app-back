@@ -548,6 +548,12 @@ export class AssetsService {
 
         if (Object.keys(cambiosPersona).length > 0) {
           await this.prisma.person.update({ where: { id: persona.id }, data: cambiosPersona });
+          // HWIDApp dice en que sucursal esta la persona HOY. Si cambio, sus
+          // equipos se mudan con ella: si no, quedaban repartidos entre la
+          // sucursal vieja y la nueva.
+          if (cambiosPersona.branchId !== undefined) {
+            await this.peopleService.alinearSucursalDeSusEquipos(persona.id, cambiosPersona.branchId);
+          }
         }
       }
 
