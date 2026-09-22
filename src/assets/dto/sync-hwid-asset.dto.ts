@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 // Lo que manda hwid-server cuando HWIDApp guarda el responsable de un
@@ -54,6 +54,11 @@ export class SyncHwidAssetDto {
     @IsOptional()
     @IsString()
     notes?: string;
+
+    @ApiPropertyOptional({ description: 'true si HWIDApp tiene el equipo dado de baja (fuera de servicio)' })
+    @IsOptional()
+    @IsBoolean()
+    dadoDeBaja?: boolean;
 
     @ApiPropertyOptional({ description: 'Resto de la ficha técnica (CPU, RAM, discos, etc.)', type: Object })
     @IsOptional()

@@ -431,6 +431,13 @@ export class AssetsService {
 
       const serial = dto.serialNumber?.trim();
 
+      // HWIDApp manda si el equipo esta dado de baja, y eso tiene que viajar:
+      // antes no se transmitia y una laptop retirada desde el panel de hwid
+      // seguia figurando aca como "Asignado" y activa, con su responsable
+      // puesto. Un equipo de baja no tiene responsable — queda fuera de
+      // servicio y se le cierra la asignacion.
+      const dadoDeBaja = dto.dadoDeBaja === true;
+
       // EL SERIAL ES LA IDENTIDAD FÍSICA DEL EQUIPO
       // ===========================================
       // serialNumber es el IMEI en celulares y el número de serie en PCs: si
@@ -567,7 +574,11 @@ export class AssetsService {
         // que alguien haya puesto a mano en Gestor-Tech.
         ...(dto.notes?.trim() ? { notes: dto.notes.trim() } : {}),
         ...(branchId !== undefined ? { branchId } : {}),
-        ...(persona ? { assignedPersonId: persona.id, status: 'assigned' as const } : {}),
+        ...(dadoDeBaja
+          ? { assignedPersonId: null, status: 'decommissioned' as const }
+          : persona
+            ? { assignedPersonId: persona.id, status: 'assigned' as const }
+            : {}),
       };
 
       // Comparación exacta de assetCode NO alcanza: códigos cargados a mano
@@ -810,7 +821,11 @@ export class AssetsService {
         duplicadosEliminados.push(dup.assetCode);
       }
 
-      if (persona) {
+      // Un equipo de baja no propaga su numero a la persona ni abre
+      // asignacion: salio de servicio. Si mas adelante lo reactivan en hwid,
+      // el siguiente envio llega con dadoDeBaja en false y se vuelve a
+      // asignar solo.
+      if (persona && !dadoDeBaja) {
         // Del código REALMENTE aplicado, no del pedido: si quedó apartado por
         // un choque, el regex no casa, no hay número y no se propaga nada —
         // que es justo lo que se quiere mientras el choque no se resuelva.
@@ -886,9 +901,24 @@ export class AssetsService {
         }
       }
 
+      if (dadoDeBaja) {
+        const cerradas = await this.prisma.assignmentHistory.updateMany({
+          where: { assetId: activo.id, returnDate: null },
+          data: {
+            returnDate: new Date(),
+            returnNotes: 'Cerrada automaticamente: el equipo fue dado de baja en HWIDApp.',
+          },
+        });
+        if (cerradas.count > 0) {
+          console.warn(
+            `[inventario] ${codigoDestino} quedo fuera de servicio (dado de baja en HWIDApp): ${cerradas.count} asignacion(es) cerrada(s).`,
+          );
+        }
+      }
+
       return {
         asset: activo,
-        personaVinculada: persona?.id ?? null,
+        personaVinculada: dadoDeBaja ? null : (persona?.id ?? null),
         duplicadosEliminados,
         duplicadosConHistorial,
       };
