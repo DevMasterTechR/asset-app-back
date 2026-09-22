@@ -27,6 +27,7 @@ const MAPEO_SUCURSAL_HWID: Record<string, string> = {
   CUENCA: 'Cuenca',
   MACHALA: 'Machala',
   LOJA: 'Loja',
+  'CD EBENEZER CARCELÉN': 'Carcelen CD',
 };
 
 @Injectable()
